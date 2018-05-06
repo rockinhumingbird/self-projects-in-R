@@ -173,10 +173,10 @@ autoplot(fcast) + xlab("Years") + ylab("Change in %") + ggtitle("Forecasts from 
 ###############################PART2: sentiment score for DJI, using twitter text mining############################## 
 
 # Get API Credentials from Twitter
-apiKey<-"WJy6wpIOsbYAmuV4bCxDWKrhl"
-apiSecret<-"mYSNjipmsJq3jjbfFKGyPahOS9MkeD426r5IXfCpnhotrujnmR"
-apiToken<-"982312249627852802-nxzPM6hP8b2SgeIKkNInWfbKOzPpaHL"
-apiTokenSecret<-"8PB34oiS36pLw8sli5DE1N10aMLnCZkymo6NWYUn7e0sh"
+apiKey<-"W
+apiSecret<-"m"
+apiToken<-"L"
+apiTokenSecret<-"8"
 setup_twitter_oauth(apiKey,apiSecret,apiToken,apiTokenSecret)
 
 # gather tweets of Dow Jones 
