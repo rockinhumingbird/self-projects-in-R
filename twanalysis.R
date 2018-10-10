@@ -2,10 +2,10 @@
 library(twitteR)
 library(ROAuth)
 
-my.key<-"64ETBSuRdu6Mi3kaERMXxs0ut"
-my.secret<- "2MxtVmvR291m1eTmAEmGAiI1iC2OiV4UibxdA1w7y542bhlqxG"
-accesstoken<-"170224887-pGsX0vhyDaHXlayeCM5PNxnR1TraN1lomD0UZisG"
-tokensecret<-"hgw4tdHyj2oUrJ8DR3MvRzLyZKAmcSdxkQLPKba8mEdRr"
+my.key<-"
+my.secret<- ""
+accesstoken<-"-"
+tokensecret<-""
 setup_twitter_oauth(consumer_key=my.key, consumer_secret=my.secret, access_token=accesstoken, access_secret=tokensecret)
 
 stocktweets=searchTwitter("#stock", n=10000, lang="en")
