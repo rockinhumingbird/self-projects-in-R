@@ -36,12 +36,11 @@ stockcorpus = tm_map(stockcorpus,removeNumbers)
 stockstem<-tm_map(stockcorpus,stemDocument)
 dtm = DocumentTermMatrix(stockcorpus)
 tweetsdf = as.data.frame(as.matrix(dtm))
-
-
 inspect(dtm[1:5,1:7])
 sparse = removeSparseTerms(dtm,0.99)
 tweetsSparse = as.data.frame(as.matrix(sparse))
 colnames(tweetsSparse) = make.names(colnames(tweetsSparse))
+#wordcloud
 library(wordcloud)
 wordcloud(colnames(tweetsSparse),colSums(tweetsSparse),scale=c(10.5,0.5),min.freq=3)
 bb.frequent<- sort(rowSums(as.matrix(dtm)), decreasing = TRUE)
@@ -49,7 +48,7 @@ bb.frequent<- sort(rowSums(as.matrix(dtm)), decreasing = TRUE)
 findFreqTerms(dtm,lowfreq=60)
 findAssocs(dtm,"predict",0.5)
 #converttweetsintodataframe save to local
-write.csv(stocktweets, "C:/Users/soviv/Downloads/stock.csv")
+write.csv(stocktweets, "/Downloads/stock.csv")
 
 positiveWords = scan(“positive-words.txt”,what=“character”,comment.char=“;”) 
 negativeWords = scan(“negative-words.txt”,what=“character”,comment.char=“;”) 
@@ -66,3 +65,15 @@ score = laply(stocktweets,function(x){
   y =tolower(y)
   sum(!is.na(match(y,positiveWords))) - sum(!is.na(match(y,negativeWords)))
 })
+delay <- flights_tbl %>% 
+  group_by(tailnum) %>%
+  summarise(count = n(), dist = mean(distance), delay = mean(arr_delay)) %>%
+  filter(count > 20, dist < 2000, !is.na(delay)) %>%
+  collect
+
+# plot delays
+library(ggplot2)
+ggplot(delay, aes(dist, delay)) +
+  geom_point(aes(size = count), alpha = 1/2) +
+  geom_smooth() +
+  scale_size_area(max_size = 2)
