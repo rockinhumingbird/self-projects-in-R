@@ -1,0 +1,26 @@
+---
+title: "Plot_ly Demo"
+date: "28 December 2018"
+author : "Zoe"
+output : ioslides_presentation
+
+---
+# Slide 1- Intro
+-A demonstration using Ployly on dataset in ggplot2 package "Diamonds"
+```{r,echo=FALSE,message=FALSE,warning=FALSE}
+library(ggplot2)
+library(plotly)
+data(diamonds)
+d <- diamonds[sample(nrow(diamonds), 1000), ]
+```
+
+# Slide 2 A simple plot_ly
+```{r,echo=FALSE,fig.align='center', fig.cap="A scatterplot- diamonds carat on price factory by cut", message = FALSE,warning=FALSE}
+plot_ly(d, x = ~carat, y = ~price, color = ~factor(cut))
+```
+
+# Slide 3 Another simple plot_ly using carat on price, factor by clarity
+
+```{r,echo=FALSE,fig.align = 'center',fig.cap="A scatterplot- diamonds carat on price factor by clarity ", message = FALSE,warning=FALSE}
+plot_ly(d, x = ~carat, y = ~price, type = "scatter", color = ~factor(clarity))
+```
