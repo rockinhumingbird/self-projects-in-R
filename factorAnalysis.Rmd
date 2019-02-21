@@ -1,0 +1,189 @@
+---
+title: "Factor Analysis"
+output: html_document
+---
+
+### Read Toothpaste Data
+You must read the data before trying to run code on your own machine. To read data use the following code after setting your working directory. To set your working directory, modify the following to set the file path for the folder where the data file resides.
+setwd('c:/thatawesomeclass/)
+
+```{r, warning=F,message=F, echo=FALSE}
+setwd('C:/myFiles/ConsultingAndService/CourseDevelopment/AAFM2/Slides/4_DimensionReduction')
+```
+
+```{r, warning=F,message=F}
+data = read.csv('toothpaste.csv')
+```
+
+### Explore Data
+The survey consists of responses to six seven-point likert-scale items with anchors, strongly disagree and strongly agree.  
+* prevents_cavities: It is important to buy a toothpaste that prevents cavities  
+* shiny_teeth: I like a toothpaste that gives shiny teeth  
+* strengthens_gums: A toothpaste should strengthen your gums  
+* freshens_breath: I prefer a toothpaste that freshens breath  
+* prevent_decay_not_imp: Prevention of tooth decay is not an important benefit offered by a toothpaste  
+* attractive_teeth: The most important consideration in buying a toothpaste is attractive teeth  
+
+```{r, warning=F,message=F}
+survey = data[,2:7]
+head(survey)
+summary(survey)
+```
+
+### Suitability for Factor Analysis  
+
+#### Correlations
+
+We examine bivariate correlations among responses to the six survey questions. 
+
+* A correlation matrix with some large and some small correlations is ideal for factor analysis.   
+* If all correlations are small, there is no way to group variables. On the other hand, if all correlations are large, then all the variables will load onto the same factor. 
+
+It is common to assume responses to itemized rating scales, the kind used for this survey, are on an interval scale. Therefore, we will compute pearson's product moment correlation. Note, if we treat the data as being ordinal (as some researchers would argue), we would examine polychoric correlations.  
+
+```{r, warning=F,message=F}
+round(cor(survey), 3)
+```
+
+Since we are only interested in the pattern of correlations, we can look at a heatmap of correlations.
+```{r, warning=F,message=F}
+library(corrplot)
+corrplot(cor(data[,2:7]),type = 'lower',,col = c('red','white','green'),method = 'square',diag = F)
+```
+
+Here is a plot using ggcorrplot
+```{r, warning=F,message=F}
+library(ggcorrplot)
+ggcorrplot(cor(data[,2:7]),colors = c('red','white','green'),type = 'lower')
+```
+
+
+
+#### Bartlett's Test of Sphericity
+Looks to see if there are at least some non-zero correlations by comparing correlation matrix to an identity matrix. A significant test indicates suitability for factor analysis. 
+
+```{r, warning=F,message=F}
+library(psych)
+cortest.bartlett(cor(survey),n = 30)
+```
+
+#### KMO Measure of Sampling Adequacy (MSA)
+Compares partial correlation matrix to pairwise correlation matrix. A partial correlation is a correlation after partialing out all other correlations. If the variables are strongly related, partial correlations should be small and MSA close to 1. If MSA > 0.5, data is suitable for factor analysis.
+
+```{r, warning=F,message=F}
+KMO(r = cor(survey))
+```
+
+
+
+### Determine Number of Factors
+It is critical to have an a priori expectation of the number of factors. 
+
+Now, let us examine some data-driven methods used to corroborate an priori solution or select from a set of a priori solutions.  
+
+#### Scree Plot  
+Line graph of eigen values for each factor. Ideal number of factors is indicated by a sudden change in the line graph or what is known as the elbow.
+
+```{r, warning=F,message=F}
+scree(cor(survey),factors = T,pc = F)
+```
+
+#### Eigen Value
+According to the eigen-value criterion, all factors with eigen value greater than 1 are selected.
+
+```{r, warning=F,message=F}
+data.frame(factor = 1:ncol(survey), eigen = scree(cor(survey),factors = T,pc = F)$fv)
+```
+
+#### Parallel Analysis  
+Simulate a dataset with same variables and observations as original dataset. Compute correlation matrix and eigen values. Now, compare eigen values from simulated data to original data. Select factors with eigen values in the original data greater than eigen values in the simulated data.  
+```{r, warning=F,message=F}
+fa.parallel(survey,fa='fa',fm = 'pa')
+```
+#### Total Variance Explained
+To ensure that the factors represents the original variables sufficiently well, the total variance explained by factors should be greater than 70%.
+
+Since the three above tests corroborated the a priori two-factor solution, we will now run an exploratory factor analysis using principal axis factoring with two factors. Next, we examine the Cumulative Variance explained by the two factors. 
+
+```{r, warning=F, message=F}
+result = fa(r = survey,nfactors = 2,fm = 'pa',rotate = 'none')
+result$Vaccounted
+```
+
+#### Extracted Communalities  
+* Communality reflects the amount of variance in a variable that can be explained by the factors.   
+* Larger the communality, the more of the variable is captured by the factor solution.   
+* On the other hand, a small communality implies most of the variance in the variable was not captured. Ideally, communality of each variable must be greater than 0.7, but a communality greater than 0.5 may be seen as acceptable.  
+```{r, warning=F,message=F}
+data.frame(communality = result$communality)
+```
+
+### Mapping Variables to Factors
+Each variable is represented as a linear combination of factors. An ideal factor solution is where each variable is expected to load on (i.e., related to) only one factor. Such a result is easy to interpret. In practice, each variable may load on many factors. This may still be acceptable so long as the loading on one factor is large and on all other factors is small.   
+
+When the pattern of loadings does not show a clear preference of a variable for a factor, rotating the axes may help generate a clear mapping. There are two broad types of axes rotation  
+* Orthogonal: Axes are rotated while constraining them to be at right angles. E.g., varimax, quartimax, equimax   
+* Oblique: Axes are allowed to have any angle between them. E.g., oblimin, promax  
+
+
+Here is the pattern of loadings for the unrotated solution (i.e., rotation='none)
+
+```{r, warning=F,message=F}
+print(result$loadings, cut=0)
+```
+
+To make the matrix of loadings easier to interpret, let us exclude small loadings, say below 0.15. Note, four of the six variables load on both factors. 
+```{r, warning=F,message=F}
+print(result$loadings, cut=0.15)
+```
+
+Now, let's examine the matrix after an orthogonal rotation using varimax. Is the mapping of variables to factors more clear?
+```{r, warning=F,message=F}
+fa_varimax = fa(r = survey,nfactors = 2,fm = 'pa',rotate = 'varimax')
+print(fa_varimax$loadings,cut=0.15)
+```
+
+Now, let's try an oblique rotation using oblimin. What do you think of the mapping of variables to factors?
+```{r, warning=F,message=F}
+fa_oblimin = fa(r = survey,nfactors = 2,fm = 'pa',rotate = 'oblimin')
+print(fa_oblimin$loadings,cut=0.15)
+```
+
+
+### Interpretation  
+Review pattern of factor loadings from the rotated matrix to interpret the factor analysis solution. The meaning of each factor is derived from the variables loading on it. So, let's review the variables to describe each factor.
+
+Since oblimin offered the clearest mapping of variables to factors, that matrix is used. To make interpretation easier, matrix is sorted. 
+
+What need is reflected in the first factor, PA1? What need is reflected by the second factor, PA2? Are these consistent with our a priori expectation?
+```{r, warning=F,message=F}
+print(fa_oblimin$loadings,cut=0.15, sort=T)
+```
+
+
+```{r, warning=F,message=F}
+fa.diagram(fa_oblimin,sort = T)
+```
+
+### Representing the Factor
+If the goal is to use the factors in further analysis, then they may be represented in one of three ways
+
+Average scores of variables reflecting the factor
+
+```{r, warning=F,message=F}
+factor1_avg = rowMeans(survey[,c('prevents_cavities','strengthens_gums','prevent_decay_not_imp')])
+factor2_avg = rowMeans(survey[,c('attractive_teeth','freshens_breath','shiny_teeth')]) 
+```
+
+Weighted average of variables reflecting the factor, where weights are the factor loadings
+
+```{r, warning=F,message=F}
+factor1_score = fa_oblimin$scores[,'PA1']
+factor2_score = fa_oblimin$scores[,'PA2']
+```
+
+Pick a variable as a representative of the factor. Here, we are selecting the variable with the largest factor loading.
+```{r, warning=F,message=F}
+factor1_surrogate = survey[,'prevents_cavities']
+factor2_surrogate = survey[,'attractive_teeth']
+```

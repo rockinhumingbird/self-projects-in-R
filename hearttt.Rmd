@@ -1,0 +1,233 @@
+---
+title: "heartdisease"
+author: "zoe"
+date: "February 6, 2019"
+output: 
+  prettydoc::html_pretty:
+    highlight: github
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, comment="", warning = FALSE, message = FALSE, tidy.opts=list(width.cutoff=55), tidy = TRUE)
+```
+
+## A quick classification prediction
+
+```{r setup load library and read ddata}
+library(rpart)
+library(rpart.plot)
+library(data.table)
+library(caret)
+library(GGally)
+library(ggthemes)
+library(broom)
+library(dplyr)
+library(bindrcpp)
+library(caTools)
+library(rattle)
+library(formatR)
+library(ggplot2)
+
+heart<-fread("heart.csv")
+heart$sex <- as.character(heart$sex)
+heart$sex <- ifelse(heart$sex=="0",'female','male')
+heart$fbs <- as.character(heart$fbs)
+heart$fbs <- ifelse(heart$fbs=="0",'FastBloodSgr<=120','FastBloodSgr>120')
+heart$cp <- as.factor(heart$cp)
+heart$thal<- as.character(heart$thal)
+library(caTools)
+set.seed(100)
+split = sample.split(heart$target,SplitRatio = 0.7)
+train = heart[split,]
+test = heart[!split,]
+```
+
+
+```{r plot}
+ggplot(heart, aes(x = target, fill = factor(cp))) +
+  geom_bar(stat='count', position='dodge') +
+  scale_x_continuous(breaks=c(0:1)) +
+  labs(x = 'chest pain') +
+  theme_few()
+
+ggplot(heart, aes(x = target, fill = factor(thal))) +
+  geom_bar(stat='count', position='dodge') +
+  scale_x_continuous(breaks=c(0:1)) +
+  labs(x = 'thal type') +
+  theme_few()
+
+ggplot(heart, aes(x = target, fill = factor(restecg))) +
+  geom_bar(stat='count', position='dodge') +
+  scale_x_continuous(breaks=c(0:1)) +
+  labs(x = 'resting electrocardiographic results') +
+  theme_few()
+
+ggplot(heart, aes(x = age, fill = factor(target))) +
+  geom_histogram() + stat_bin(bins = 30,binwidth = 1.5)+
+  theme_few()+ggtitle("target and age")
+
+ggplot(heart,aes(heart$age, fill=target)) +
+  geom_density(alpha=.1, fill="black")+
+  facet_wrap(~target, ncol=1,scale="fixed") +
+  theme_economist()  +
+  xlab("Age") +
+  ylab("Density / Count") +
+  ggtitle("Age Histogram")
+
+ggplot(heart,aes(heart$thalach, fill=target)) +
+  geom_density(alpha=.1, fill="black")+
+  facet_wrap(~target, ncol=1,scale="fixed") +
+  theme_economist()  +
+  scale_fill_manual(values=c("pink","blue"))+
+  xlab("thalach") +
+  ylab("Density / Count") +
+  ggtitle("Max Heartrate Histogram")
+
+ggplot(heart, aes(trestbps)) +
+  geom_density(fill = "red", bw = 1)
+
+ggplot(heart,aes(heart$trestbps, fill=target)) +
+  geom_density(alpha=.1)+
+  facet_wrap(~target, ncol=1,scale="fixed") +
+  theme_economist()  +
+  xlab("trestbps") +
+  ylab("Density / Count") +
+  ggtitle("resting bloodpressure Histogram")
+
+ggplot(heart,aes(heart$chol, fill=target)) +
+  geom_density(alpha=.1, fill="black")+
+  facet_wrap(~target, ncol=1,scale="fixed") +
+  theme_economist()  +
+  xlab("chol") +
+  ylab("Density / Count") +
+  ggtitle("serum cholestoral in mg/dl Histogram")
+
+ggplot(heart,aes(heart$oldpeak, fill=target)) +
+  geom_density(alpha=.1, fill="black")+
+  facet_wrap(~target, ncol=1,scale="fixed") +
+  theme_economist()  +
+  xlab("Age") +
+  ylab("Density / Count") +
+  ggtitle("Age Histogram")
+
+```
+
+
+
+```{r percent freq table}
+table(train$sex) / nrow(train) 
+table(train$cp) / nrow(train) 
+table(train$fbs) / nrow(train)
+table(train$thal) / nrow(train)
+```
+
+## Regression Tree
+```{r regression tree}
+tree2 = rpart(target~.,data=train,cp=0.005) 
+rpart.plot(tree2)
+library(ROCR)
+pred = predict(tree2,newdata=test)
+ROCRpred = prediction(pred,test$target)
+aucrpart=round(as.numeric(performance(ROCRpred,"auc")@y.values,digits=3)) # auc measure
+print(paste("AUC for rpart is: ", aucrpart))
+
+sseTree2 = sum((pred-test$target)^2); sseTree2
+
+## construct plot
+ROCRperf = performance(ROCRpred,"tpr","fpr")
+plot(ROCRperf) 
+# color coded ROC curve
+plot(ROCRperf,colorize=TRUE,print.cutoffs.at=seq(0,1,0.2),text.adj=c(-0.3,2))
+
+```
+
+
+## Hierarchical Cluster Analysis
+```{r Hierarchical Cluster Analysis}
+distances = dist(train,method = 'euclidean')
+clusters = hclust(d = distances,method = 'ward.D2')
+library(dendextend)
+plot(color_branches(as.dendrogram(clusters),k = 2,groupLabels = F))
+clusterGroups = cutree(clusters,k=2)
+```
+
+
+
+##GLM
+```{r glm}
+glm(formula = target ~ ., family = binomial, data = train)
+glm(formula = target ~ cp+sex+thal+ca+exang+thalach+oldpeak, family = binomial, data = train)
+
+#Tuning parameters
+fitControl <- caret::trainControl(method = "repeatedcv",
+                             number = 10,
+                             repeats = 10,
+                             classProbs = TRUE)
+train$target<-make.names(train$target)
+set.seed(1000)
+train$target<-as.factor(train$target) 
+  
+glm1 <- caret::train(target ~ age+cp+sex+thal+ca+exang+thalach+oldpeak, 
+                          data = train ,
+                          method = "glm", 
+                          trControl = fitControl,
+                          metric="ROC")
+
+glm1
+glm2 <- caret::train(target ~., 
+                          data = train ,
+                          method = "glm", 
+                          trControl = fitControl,
+                          metric="ROC")
+
+glm2
+set.seed(865)
+grf <- caret::train(target ~ ., 
+                          data = train ,
+                          method = "rf", 
+                          trControl = fitControl,
+                          metric="ROC")
+
+grf
+# Show number of predictors
+
+plot(grf)
+
+
+set.seed(825)
+gbmFit1 <- train(target ~ ., data = train, 
+                 method = "gbm", 
+                 trControl = fitControl,
+                 verbose = FALSE)
+gbmFit1
+
+
+```
+
+
+```{r rfmodel1}
+library(randomForest)
+library(caTools)
+heart<-fread("heart.csv")
+set.seed(100)
+split = sample.split(heart$target,SplitRatio = 0.75)
+train = heart[split,]
+test = heart[!split,]
+# Set a random seed
+set.seed(754)
+# Build the model 
+rf_model1 <- randomForest(factor(target)~.,
+                         data = train,
+                           importance=TRUE)
+
+plot(rf_model1, ylim=c(0,0.6))
+legend('topright', colnames(rf_model1$err.rate), col=1:3, fill=1:3)
+
+
+##generate the 01 table for randomforest prediction
+prediction1 <- predict(rf_model1, test)
+
+confusionMatrix(table(prediction1,test$target))
+
+```
+

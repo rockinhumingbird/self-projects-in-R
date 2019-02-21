@@ -1,0 +1,199 @@
+---
+title: "Cluster Then Predict"
+output: html_document
+---
+
+#### In this illustration, we will cluster our data before constructing predictive models. 
+
+## Read Wine Data
+You must read the data before trying to run code on your own machine. To read data use the following code after setting your working directory. To set your working directory, modify the following to set the file path for the folder where the data file resides.
+setwd('c:/thatawesomeclass/)
+
+```{r, warning=F,message=F, echo=FALSE}
+setwd('C:/myFiles/ConsultingAndService/CourseDevelopment/AAFM2/Slides/2_Clustering')
+```
+
+
+```{r, warning=F,message=F}
+wine = read.table('jpm_cluster.csv',header=TRUE,sep=';')
+```
+
+
+## Explore Data
+This dataset contains information on chemical properties of a set of wines (e.g., fixed acidity, alcohol) and a rating of quality.
+```{r, warning=F,message=F}
+str(wine)
+```
+
+## Split Data  
+```{r}
+library(caret)
+set.seed(1706)
+split = createDataPartition(y=wine$quality,p = 0.7,list = F,groups = 100)
+train = wine[split,]
+test = wine[-split,]
+```
+
+## Predictive Model
+```{r}
+linear = lm(quality~.,train)
+summary(linear)
+sseLinear = sum(linear$residuals^2); sseLinear
+predLinear = predict(linear,newdata=test)
+sseLinear = sum((predLinear-test$quality)^2); sseLinear
+```
+
+## Cluster then Predict
+Let us cluster first and then run a model to see if there is an improvement. To cluster the wines, we have to remove the outcome variable
+```{r}
+trainMinusDV = subset(train,select=-c(quality))
+testMinusDV = subset(test,select=-c(quality))
+```
+
+### Prepare for Clustering
+Cluster Analysis is sensitive to scale. Normalizing the data. 
+```{r}
+library(caret)
+preproc = preProcess(trainMinusDV)
+trainNorm = predict(preproc,trainMinusDV)
+testNorm = predict(preproc,testMinusDV)
+mean(trainNorm$chlorides)
+mean(testNorm$chlorides)
+```
+
+## Hierarchical Cluster Analysis
+```{r}
+distances = dist(trainNorm,method = 'euclidean')
+clusters = hclust(d = distances,method = 'ward.D2')
+library(dendextend)
+plot(color_branches(as.dendrogram(clusters),k = 2,groupLabels = F))
+clusterGroups = cutree(clusters,k=2)
+```
+
+#### Visualize  
+To express the clusters on a scatterplot, we flatten the data with eleven variables into 2 dimensions by conducting a factor analysis with varimax rotation. This is done because it is not possible to visualize 11-dimensional data. 
+```{r, warning=F, message=F}
+library(psych)
+temp = data.frame(cluster = factor(clusterGroups),
+           factor1 = fa(trainNorm,nfactors = 2,rotate = 'varimax')$scores[,1],
+           factor2 = fa(trainNorm,nfactors = 2,rotate = 'varimax')$scores[,2])
+ggplot(temp,aes(x=factor1,y=factor2,col=cluster))+
+  geom_point()
+```
+
+## K-means Clustering
+```{r}
+set.seed(1706)
+km = kmeans(x = trainNorm,centers = 2,iter.max=10000,nstart=100)
+#km$centers
+mean(km$cluster==clusterGroups) # %match between results of hclust and kmeans
+```
+
+#### Total within sum of squares Plot
+```{r, warning=F,message=F}
+within_ss = sapply(1:10,FUN = function(x) kmeans(x = trainNorm,centers = x,iter.max = 1000,nstart = 25)$tot.withinss)
+ggplot(data=data.frame(cluster = 1:10,within_ss),aes(x=cluster,y=within_ss))+
+  geom_line(col='steelblue',size=1.2)+
+  geom_point()+
+  scale_x_continuous(breaks=seq(1,10,1))
+```
+
+##### Ratio Plot   
+```{r, warning=F,message=F}
+ratio_ss = sapply(1:10,FUN = function(x) {km = kmeans(x = trainNorm,centers = x,iter.max = 1000,nstart = 25)
+km$betweenss/km$totss} )
+ggplot(data=data.frame(cluster = 1:10,ratio_ss),aes(x=cluster,y=ratio_ss))+
+  geom_line(col='steelblue',size=1.2)+
+  geom_point()+
+  scale_x_continuous(breaks=seq(1,10,1))
+```
+
+##### Silhouette Plot
+```{r, warning=F, message=F}
+library(cluster)
+silhoette_width = sapply(2:10,FUN = function(x) pam(x = trainNorm,k = x)$silinfo$avg.width)
+ggplot(data=data.frame(cluster = 2:10,silhoette_width),aes(x=cluster,y=silhoette_width))+
+  geom_line(col='steelblue',size=1.2)+
+  geom_point()+
+  scale_x_continuous(breaks=seq(2,10,1))
+
+```
+
+The elbow plots support a two cluster solution while silhoette plot recommends a four cluster solution. We are going to go with two clusters as dividing the data into four groups would not leave enough data to fit a model. 
+
+### Apply Clustering Solution from Train set to Test Set
+```{r, warning=F, message=F}
+library(flexclust)
+km_kcca = as.kcca(km,trainNorm) # flexclust uses objects of the classes kcca
+clusterTrain = predict(km_kcca)
+clusterTest = predict(km_kcca,newdata=testNorm)
+```
+
+Distribution of wines across clusters in Train
+```{r}
+table(clusterTrain)
+```
+
+Distribution of wines across clusters in Test
+```{r}
+table(clusterTest) # 
+```
+
+### Split train and test based on cluster membership
+```{r}
+train1 = subset(train,clusterTrain==1)
+train2 = subset(train,clusterTrain==2)
+test1 = subset(test,clusterTest==1)
+test2 = subset(test,clusterTest==2)
+```
+
+### Predict for each Cluster then Combine
+```{r}
+lm1 = lm(quality~.,train1)
+lm2 = lm(quality~.,train2)
+pred1 = predict(lm1,newdata=test1)
+pred2 = predict(lm2,newdata=test2)
+sse1 = sum((test1$quality-pred1)^2); sse1
+sse2 = sum((test2$quality-pred2)^2); sse2
+predOverall = c(pred1,pred2)
+qualityOverall = c(test1$quality,test2$quality)
+sseOverall = sum((predOverall - qualityOverall)^2); sseOverall
+```
+
+### Comparison
+Let us compare the sse for model on the entire data to the sse for models on clusters. 
+```{r}
+paste('sse for model on entire data',sseLinear)
+paste('sse for model on clusters',sseOverall)
+```
+
+
+### Predict Using Tree
+```{r}
+library(rpart)
+library(rpart.plot)
+tree = rpart(quality~.,train,minbucket=10)
+predTree = predict(tree,newdata=test)
+sseTree = sum((predTree - test$quality)^2); sseTree
+```
+
+### Cluster then Predict using Tree
+```{r}
+tree1 = rpart(quality~.,train1,minbucket=10)
+tree2 = rpart(quality~.,train2,minbucket=10)
+pred1 = predict(tree1,newdata=test1)
+pred2 = predict(tree2,newdata=test2)
+
+sse1 = sum((test1$quality-pred1)^2); sse1
+sse2 = sum((test2$quality-pred2)^2); sse2
+predTreeCombine = c(pred1,pred2)
+qualityOverall = c(test1$quality,test2$quality)
+sseTreeCombine = sum((predTreeCombine - qualityOverall)^2); sseTreeCombine
+```
+
+### Comparison
+Let us compare the sse for model on the entire data to the sse for models on clusters. 
+```{r}
+paste('sse for model on entire data',sseTree)
+paste('sse for model on clusters',sseTreeCombine)
+```
