@@ -1,0 +1,216 @@
+---
+title: "Principal Components Analysis"
+output: html_document
+---
+
+### Read Wine Data
+You must read the data before trying to run code on your own machine. To read data use the following code after setting your working directory. To set your working directory, modify the following to set the file path for the folder where the data file resides.
+setwd('c:/thatawesomeclass/)
+
+
+
+```{r, warning=F,message=F}
+wine = read.table('wine.csv',header=TRUE,sep=';')
+```
+
+### Explore Data
+This dataset contains information on chemical properties of a set of wines (e.g., fixed acidity, alcohol) and a rating of quality.
+
+```{r, warning=F,message=F}
+str(wine)
+```
+
+### Prepare Data  
+
+#### Missing Values
+Principal Components Analysis uses data on all variables. A missing observation on one variable will cause the entire row of data to be ignored for analysis. Therefore, it is important to impute missing values. These can be imputed using any of a variety of imputation functions available in packages such as mice, caret, and missMDA
+
+#### Standardize variables
+It is important to standardize variables to ensure they receive the same weight in analysis. We do not need to standardize at this stage because the principal components analysis functions we will be using include an argument for standardizing variables. 
+
+#### Split Data  
+```{r}
+library(caret)
+set.seed(1706)
+split = createDataPartition(y=wine$quality,p = 0.7,list = F,groups = 100)
+train_wine = wine[split,]
+test_wine = wine[-split,]
+```
+
+#### Drop quality  
+Drop quality from train and test sets. Only keeping variables to be reduced to fewer components
+```{r, warning=F,message=F}
+train = train_wine[,1:11]
+test = test_wine[,1:11]
+```
+
+
+### Suitability for Principal Components Analysis  
+Principal Components Analysis is used to reduce the dimensionality of the data by representing a large number of variables with a fewer number of components. Similar variables get grouped into the same component while dissimilar variables are placed in different components. 
+
+#### Correlations
+Similarity is typically judged by the correlation. Presence of large correlations in the data indicates similarity in the data. From the perspective of supervised learning techniques, correlated variables indicate redundancy. 
+
+```{r, warning=F,message=F}
+round(cor(train,use='complete.obs'), 3)
+```
+
+Visualizing the matrix to spot high correlations may be easier. Here, we use ggplot2 to construct a correlation matrix. High correlations indicates pairwise similarity. 
+```{r, warning=F,message=F}
+library(tidyr); library(dplyr); library(ggplot2)
+corMatrix = as.data.frame(cor(train))
+corMatrix$var1 = rownames(corMatrix)
+corMatrix %>%
+  gather(key=var2,value=r,1:11)%>%
+  ggplot(aes(x=var1,y=var2,fill=r))+
+  geom_tile()+
+  geom_text(aes(label=round(r,2)),size=3)+
+  scale_fill_gradient2(low = 'red',high='green',mid = 'white')+
+  theme(axis.text.x=element_text(angle=90))
+```
+
+Of course, one could also employ corrplot or ggcorrplot to construct a similar plot. Both these plots have the added benefit of only representing the lower half and grouping variables based on similarity. In the following correlation heat maps, similar variables are placed side-by-side. Do you see any groupings?
+
+```{r, warning=F,message=F}
+library(corrplot)
+corrplot(cor(train),type = 'lower',col = c('red','white','green'),method = 'pie',diag = F,order='hclust')
+
+```
+
+Here is a plot using ggcorrplot. This
+```{r, warning=F,message=F}
+library(ggcorrplot)
+ggcorrplot(cor(train),colors = c('red','white','green'),hc.order = T,type = 'lower')
+```
+
+
+
+#### Bartlett's Test of Sphericity
+Looks to see if there are at least some non-zero correlations by comparing correlation matrix to an identity matrix. A significant test indicates suitability for factor analysis. 
+
+```{r, warning=F,message=F}
+library(psych)
+cortest.bartlett(cor(train),n = nrow(train))
+```
+
+#### KMO Measure of Sampling Adequacy (MSA)
+Compares partial correlation matrix to pairwise correlation matrix. A partial correlation is a correlation after partialing out all other correlations. If the variables are strongly related, partial correlations should be small and MSA close to 1. If MSA > 0.5, data is suitable for factor analysis.
+
+```{r, warning=F,message=F}
+KMO(cor(train))
+```
+
+
+
+### Determine Number of Components
+A dataset with p variables will generate p components. Our goal is to pick out the top few components that capture most of the variance in the original data.
+
+There are a number of functions for conducing principal components analysis including prcomp (from stats package), principal (from psych), caret, PCA (from FactoMineR), and dudi.pca (from ade4). The final results from principal components analysis are the same for all functions. The differences are in the optional arguments, helper functions and presentation of results. Here, we illustrate the use of two different functions: stats::prcomp and FactoMineR::PCA. We also use library(factoextra) to visualize the results. 
+
+#### Scree Plot  
+Line graph of eigen values for each component. Ideal number of components is indicated by a sudden change in the line graph or what is known as the elbow.
+
+Using FactoMineR
+```{r, warning=F,message=F}
+library(FactoMineR)
+pca_facto = PCA(train,graph = F)
+library(factoextra)
+fviz_eig(pca_facto,ncp=11,addlabels = T)
+#fviz_eig(pca)
+```
+
+Using prcomp
+```{r, warning=F,message=F}
+pca = prcomp(train,scale. = T)
+fviz_eig(pca,ncp = 11,addlabels = T)
+```
+
+#### Eigen Value
+According to the eigen-value criterion, all components with eigen value greater than 1 are selected.
+
+Using library(FactoMineR)
+```{r, warning=F,message=F}
+pca_facto$eig
+```
+
+```{r}
+pca_facto$eig[pca_facto$eig[,'eigenvalue']>1,]
+```
+
+Using prcomp
+```{r}
+data.frame(component = 1:length(pca$sdev), eigen_value = (pca$sdev)^2)
+```
+
+#### Parallel Analysis  
+Simulate a dataset with same variables and observations as original dataset. Compute correlation matrix and eigen values. Now, compare eigen values from simulated data to original data. Select components with eigen values in the original data greater than eigen values in the simulated data.  
+```{r, warning=F,message=F}
+library(psych)
+fa.parallel(train,fa='pc')
+```
+#### Total Variance Explained
+
+To ensure that the factors represents the original variables sufficiently well, the total variance explained by factors should be greater than 70%.
+
+Since the three above tests corroborated the a priori two-factor solution, we will now run an exploratory factor analysis using principal axis factoring with two factors. Next, we examine the Cumulative Variance explained by the two factors. 
+
+```{r, warning=F, message=F}
+pca_facto$eig
+```
+
+The results from each method differ widely:   
+* Scree Plot: 2, 3, or 6 components  
+* Eigen Value: 4 components  
+* Parallel Analysis: 3 components  
+
+However, the use of any fewer than 5 components would explain less than 70% of the original data. So, we go with a six-component structure suggested by the Scree plot. 
+
+
+### Describe Components
+Based on the analysis above we run a principal components analysis with six components.
+```{r}
+pca_facto = PCA(train,scale.unit = T,ncp = 6,graph = F)
+```
+
+Examining elements comprising each component. For any component, size of loadings indicate the importance of the variable in desribing the component. Thus
+```{r}
+pca_facto$var$contrib %>%
+  round(2)
+```
+
+Contributions of each variable to each component are charted out below. 
+```{r}
+library(factoextra);library(gridExtra)
+charts = lapply(1:6,FUN = function(x) fviz_contrib(pca_facto,choice = 'var',axes = x,title=paste('Dim',x)))
+grid.arrange(grobs = charts,ncol=3,nrow=2)
+```
+
+Next, let us visually examine the relationships between variables. The following plot charts the first two most important components, Dim1 and Dim2 which explains 44% of the total variance. Angle between a variable and component reflects strength of relationship (smaller the angle, stronger the relationship) and the color indicates the contribution of the variable to the first two components.
+The picture is helpful but one must bear in mind that it only represents the first two components (44% of variance). All six components represent 81% of variance. 
+```{r}
+fviz_pca_var(X = pca_facto,col.var = 'contrib',gradient.cols = c('red'),col.circle = 'steelblue',repel = T)
+```
+
+
+### Apply Component Structure
+In order to use the components, for downstream analysis, we first apply the component structure to the test set. Next, extract the components. Finally, combine components with other variables in the original dataset. 
+
+First, we illustrate this with the FactoMineR object
+```{r}
+trainComponents = pca_facto$ind$coord
+testComponents = predict(pca_facto,newdata=test)$coord
+
+trainComponents = cbind(trainComponents,quality = train_wine$quality)
+testComponents = cbind(testComponents,quality = test_wine$quality)
+```
+
+Next, we illustrate the same using prcomp() object. 
+Note: The sign of the scores for prcomp() are the opposite of FactoMineR but the numbers are identical. 
+```{r}
+trainComponents2 = pca$x[,1:6]
+trainComponents2 = cbind(trainComponents2,quality = train_wine$quality)
+
+testComponents2 = predict(pca,newdata = test)[,1:6]
+testComponents2 = cbind(testComponents2,quality = test_wine$quality)
+```
+

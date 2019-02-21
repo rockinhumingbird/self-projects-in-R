@@ -1,0 +1,52 @@
+---
+title: "quiz1"
+author: "zoe"
+date: "January 14, 2019"
+output: html_document
+---
+```{r setup, include=FALSE}
+opts_chunk$set(echo = TRUE, eval = TRUE, comment="", warning = FALSE, message = FALSE, tidy.opts=list(width.cutoff=55), tidy = TRUE)
+```
+## Quiz1 cousera- cleaning data JHU
+```{r libraries}
+library(prettydoc)
+library(data.table)
+library(plyr)
+library(dplyr)
+library(Hmisc)
+library(DT)
+```
+
+```{r read_data_intro, echo=FALSE, eval=TRUE}
+library(data.table)
+data1 <- fread(input = "C:/Users/soviv/Downloads/1.csv", verbose = FALSE)
+head(dat)
+
+sum(table(data1$VAL)[24])
+```
+```{r question1}
+
+t = as.data.frame(dat$VAL)
+- How many rows are there?
+
+```{r question2}
+xlsx1<-readxl::read_xlsx("2.xlsx")
+xlsx1<-data.table(xlsx1)
+x2<-xlsx1[18:23,7:15]
+
+print(sprintf("There are %d rows of data.", nrow(dat)))
+```
+
+- How many columns?
+
+```{r num_cols}
+print(sprintf("There are %d columns of data.", ncol(dat)))
+```
+
+
+
+# Save the URL of the xml file in a variable
+
+xml.url <- "https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2Frestaurants.xml"
+ 
+xmlfile <- xmlTreeParse(xml.url)

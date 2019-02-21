@@ -1,0 +1,662 @@
+---
+title: "Homework 1 — Solutions"
+author: "David Shilane"
+date: "October 6th, 2017"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+opts_chunk$set(echo = TRUE, eval = TRUE, comment="", warning = FALSE, message = FALSE, tidy.opts=list(width.cutoff=55), tidy = TRUE)
+```
+
+
+
+```{r read_data_intro, echo=FALSE, eval=TRUE}
+library(data.table)
+dat <- fread(input = "../Data/Homework 1 Data -- 2017.csv", verbose = FALSE)
+num.lines <- 1000
+question.counter = 0
+```
+
+
+## About The Data
+
+We will be working with a simulated data set related to electronic health records and long-run outcomes for cardiology patients.
+
+**File**:  Homework 1 Data -- 2017.csv
+
+**Delimiter**:  Each column of the data set is separated with a comma **,** delimiter.
+
+**Header** The first row of the data set includes the column names, and each subsequent row includes one observation of values.  Here is a selection of `r num.lines` lines from the data set:
+
+```{r show_header, echo=FALSE, eval=TRUE}
+library(DT)
+datatable(data = dat[1:num.lines], rownames = TRUE)
+```
+
+The data is written in long format (e.g. **panel data**).  Each patient's records are collected over time in one or more rows.  Each row corresponds to a period of time.  During this time, the patient's status is recorded in terms of medications, hospitalizations, and complications.  Each patient is followed until either death or the end of the follow-up period.
+
+Here is a brief description of each variable:
+
+- **id**:  This is a unique identifier for each patient.  Because of strict privacy regulations, this identifier is anonymous.  All records with the same value of **id** correspond to the same patient.  This patient's medical history is recorded in all of the rows with this **id** value.  Some patients may have only a single row, while others may have many rows of updates.
+
+- **begin**:  This is the beginning of the observation interval.  This is defined as the number of days since the patient entered the study (see the definition of **age** above).  The patient's age at the beginning of the interval is the **age** variable (in years) plus the **begin** variable (in days).
+
+- **end**:  This is the end of the observation interval.  This is defined as the number of days since the patient entered the study (see the definition of **age** above).  The observation interval is **half open**.  This means that the **begin** date is included, while the **end** date is excluded.  For patients with more than one row of records, the beginning of the next row should correspond to the end of the previous row.  Any mismatches between these values constitute gaps in coverage, when we lack records on a patient.  (For instance, if a patient switches insurance companies and then switches back, then we might lose a year's worth of records.)  The length of an interval in one row is therefore **end - begin** days.  The patient's age at the end of the interval is the **age** variable (in years) plus the **end** variable (in days).
+
+- **age**:  This is the patient's age in (rounded) years at the time of entry into the study -- at the first diagnosis of coronary heart disease.  For patients with multiple records in different rows, the age should be the same in every entry.  For the purpose of this study, all of the patients should be at least 18 years old.
+
+- **diabetes**:  This is an indicator of whether the patient had a diagnosed case of diabetes.
+
+- **hypertension**:  This is an indicator of whether the patient had a diagnosed case of hypertension.
+
+- **kidney_disease** This is an indicator of whether the patient had a diagnosed case of kidney disease.
+
+- **ace**:  This is an indicator of whether the patient has filled a prescription for ACE Inhibitors, a common cardiovascular drug.  While we cannot say when a patient actually took a medication, our pharmacy's records tell us when the patient filled a prescription and therefore *possessed* it.  Therefore, we have the following coding for the values of **ace**:
+    + **1**:  Possession;
+    + **0**:  No possession.
+
+
+- **beta.blocker**:  This is an indicator for possession of Beta Blockers, a cardiovascular medicine.  It has the same coding as that of **ace**.
+
+- **statin**:  This is an indicator for possession of Statins, another cardiovascular medicine.  It has the same coding as that of **ace** and **beta.blocker**.
+
+
+- **hospital**:  This is an indicator of whether the patient was in the hospital during the interval.  Its values are coded as:
+    + **1**:  Hospitalized;
+    + **0**:  Not Hospitalized.
+    
+
+- **heart.attack**:  This is an indicator of whether the patient suffered a heart attack.  When this occurs, the patient is assumed to go to the hospital and stay for some period of time (e.g. 1-7 days).  The heart attack is assumed to happen at the beginning of the interval, and the remainder of this time is considered a recovery period.  The values are coded as:
+    + **1**:  Suffered a heart attack.
+    + **0**:  No heart attack.
+
+  
+- **death**:  This is an indicator of the end of the patient's life.  Its values are coded as:
+    + **1**: End of life.
+    + **0**: Patient is still alive.
+  
+Each patient is followed until either death or the end of the observation.  Many patients with coronary disease were still alive at the end of follow-up.
+
+**Note**:  The description above tells you *the intended structure* of the data set.  However, it's possible that there could be problems lurking in the records.  In the course of doing this assignment, you may uncover some issues.  For instance, you may find an erroneous value in some of the variables.  In this circumstance, it will be necessary to resolve the situation.  Here are some guidelines for doing so:
+
+- If the issue has an obvious solution, then you may recode the data.  For instance, if you see a value of **TRUE** for the **heart.attack** variable, then you may safely assume that this value should have been coded as a 1.
+
+- If the issue does not have an obvious solution, then you can replace the erroneous value with **NA** to denote a missing value.  
+
+In either circumstance, note the problem in your solution and briefly describe the work you did to clean the data.
+
+**A Tip**:  We recommend familiarizing yourself with the **data.table** package in R.  This will enable you to work with large amounts of data.  Many of the questions can be answered with a relatively small amount of code by making use of data.table's functionality.
+
+
+```{r question1, echo=FALSE, eval=TRUE}
+question.counter <- question.counter + 1
+```
+
+
+## Question `r question.counter`: Reading the Data
+
+One way to read data files is using the **fread** function.  Read in the data and answer these questions:
+
+```{r libraries}
+library(prettydoc)
+library(data.table)
+library(plyr)
+library(dplyr)
+library(Hmisc)
+library(DT)
+```
+
+```{r constants}
+data.file <- "../Data/Homework 1 Data -- 2017.csv"
+
+```
+
+```{r my_functions}
+round.numerics <- function(x, digits){
+  if(is.numeric(x)){
+    return(round(x = x, digits = digits))
+  }
+  else{
+    return(x)
+  }
+}
+```
+
+
+
+```{r read_data}
+dat <- fread(input = data.file, verbose = FALSE)
+```
+- How many rows are there?
+
+```{r num_rows}
+print(sprintf("There are %d rows of data.", nrow(dat)))
+```
+
+- How many columns?
+
+```{r num_cols}
+print(sprintf("There are %d columns of data.", ncol(dat)))
+```
+
+- How many unique patients are there?
+
+```{r num_unique_patients}
+print(sprintf("There are %d unique patients.", dat[, length(unique(id))]))
+```
+- What are the names of the columns?  Do they match up with our description of the data set?
+
+```{r colnames}
+print(names(dat))
+
+print("Yes, the column headings match our expectations!")
+```
+
+
+```{r question2, echo=FALSE, eval=TRUE}
+question.counter <- question.counter + 1
+```
+
+## Question `r question.counter`:  Inspection and Cleaning
+Briefly inspect the data.  Do you see any potential problems with any of the variables?  If so, perform some data cleaning according to the guidelines in the instructions.  Briefly describe the work you did and justify any difficult choices you made.
+
+**Hints**:  If you do need to make updates to the data set, consider using the **mapvalues** function from the **plyr** package.  If you need to convert a variable from one type to another, use functions like **as.numeric**, **as.character**, etc.  Also, if you are trying to convert a variable **x** from type **factor** to **numeric**, then we recommend using **as.numeric(as.character(x))**.  This ensures that the factor's levels are not converted to numeric ranks rather than the intended values.  
+
+**More hints**:  The function **table** provides counts of each unique value, and **unique** displays what those unique values are.  You can use **print** and **sprintf** to display output.  These results can also be displayed in a web-friendly format using the **datatable** function in the **DT** package.  (This should not be confused with the **data.table package** for data processing.)
+
+Fill in your work in the subsections below.
+
+### Checking begin
+```{r begin_check}
+print("Check that begin is a numeric variable.")
+
+if(!is.numeric(dat[, begin])){
+  print("begin is not numeric.")
+}
+if(is.numeric(dat[, begin])){
+  print("begin is numeric, as expected.")
+}
+
+print(sprintf("There are %d values of begin less than zero.", dat[begin < 0, .N]))
+```
+
+### Checking end
+```{r end_check}
+  print("Check that end is a numeric variable.")
+
+  if(!is.numeric(dat[, end])){
+    print("end is not numeric.")
+  }
+  if(is.numeric(dat[, end])){
+    print("end is numeric, as expected.")
+  }
+
+  print("Check non-negativity.")
+  
+  print(sprintf("There are %d values of end less than zero.", dat[end < 0, .N]))
+  
+  print("Check that the intervals make sense, e.g. end >= begin.")
+  
+  print(sprintf("There are %d values of end that are less than the corresponding beginning value -- such intervals would be poorly defined.", dat[end < begin, .N]))
+  
+  print("Check that lifespans make sense, e.g. no one with a lifespan greater than 110.")
+  
+  # Calculate ending age in years
+  lifespan <- dat[, .(Final_Age = max(age + end/365.25)), by = id]
+  
+  print(sprintf("There are %d potentially unbelievable lifespans.", lifespan[Final_Age > 110, .N]))
+  
+```
+
+### Checking age
+```{r check_age}
+
+print("Check that age is a numeric variable.")
+if(!is.numeric(dat[, age])){
+  print("age is not numeric.")
+}
+if(is.numeric(dat[, age])){
+  print("age is numeric, as expected.")
+}
+
+print("Check on patients less than 18 years old or at least 100.")
+print("Check on patients with Mismatched Values in their records..")
+
+age.table <- dat[, .(Too_Young = sum((age < 18) > 0, na.rm = TRUE), Over_100 = sum(age >= 100, na.rm = TRUE), Mismatched_Values = mean(length(unique(age)) > 1)), by=id]
+
+print(sprintf("There are %d patients with an age less than 18.", sum(age.table[, Too_Young])))
+print(sprintf("There are %d patients with an age 100 or older.", sum(age.table[, Over_100])))
+print(sprintf("There are %d patients with different ages in different records.", sum(age.table[, Mismatched_Values])))
+```
+
+### Checking diabetes
+```{r check_diabetes}
+print("Check that diabetes is a numeric variable.")
+if(!is.numeric(dat[, diabetes])){
+  print("diabetes is not numeric.")
+}
+if(is.numeric(dat[, diabetes])){
+  print("diabetes is numeric, as expected.")
+  
+  print(dat[, table(diabetes)])
+  
+  num.unique.diabetes.values.by.patient <- dat[, .(diabetes = length(unique(diabetes))), by = "id"]
+  summary(num.unique.diabetes.values.by.patient[, diabetes])
+  
+  print("No one appears to have inconsistent values of diabetes.  Each person has one status that is maintained over time.  Perhaps it would be reasonable to expect that some patients would develop diabetes at a later date, but that did not happen in this data set.")
+}
+```
+
+### Checking kidney_disease
+```{r check_kidney disease}
+print("Check that kidney_disease is a numeric variable.")
+if(!is.numeric(dat[, kidney_disease])){
+  print("kidney_disease is not numeric.")
+}
+if(is.numeric(dat[, kidney_disease])){
+  print("kidney_disease is numeric, as expected.")
+  
+  print(dat[, table(kidney_disease)])
+  
+  num.unique.kidney_disease.values.by.patient <- dat[, .(kidney_disease = length(unique(kidney_disease))), by = "id"]
+  summary(num.unique.kidney_disease.values.by.patient[, kidney_disease])
+  
+  print("No one appears to have inconsistent values of kidney_disease.  Each person has one status that is maintained over time.  Perhaps it would be reasonable to expect that some patients would develop kidney disease at a later date, but that did not happen in this data set.")
+}
+```
+### Checking ace
+```{r check_ace}
+  print("Check that ace is a numeric variable.")
+  if(dat[, !is.numeric(ace)]){
+    print("ace is not numeric.")
+  }
+  if(dat[, is.numeric(ace)]){
+    print("ace is numeric, as expected.")
+  }
+
+  print("Show a table of ace counts for each value.")
+  
+  print(dat[, table(ace)])
+  print("The ace variable looks reasonably clean.")
+```
+
+### Checking beta.blocker
+```{r check_beta_blocker}
+  print("Check that beta.blocker is a numeric variable.")
+
+  if(dat[, !is.numeric(beta.blocker)]){
+    print("beta.blocker is not numeric.")
+  }
+  if(dat[, is.numeric(beta.blocker)]){
+    print("beta.blocker is numeric, as expected.")
+  }
+  print("Show a table of beta blocker counts for each value.") 
+  print(dat[, table(beta.blocker)])
+  
+  print("There are unexpected values here.  Time to clean the data... These values do seem to clearly indicate possession (1) or lack of possession (0) of beta blockers.  We will convert these erroneous values into appropriate measures and switch beta.blocker to a numeric variable.")
+  
+  # Get all unique values:
+  
+  unique.values <- dat[, unique(beta.blocker)]
+  
+  # Classify possession values:
+  possession.values <- c("1", "True", "Picked up", "Filled", "yes", "Yes", "Utilized", "yeah")
+  
+  # Classify non-possession values.
+  library(Hmisc)
+  nonpossession.values <- unique.values[unique.values %nin% possession.values]
+
+  library(plyr)
+  updated.values <- mapvalues(x = dat[, beta.blocker], from = c(possession.values, nonpossession.values), to = c(rep(1, length(possession.values)), rep(0, length(nonpossession.values))))
+  
+  dat[, beta.blocker := as.numeric(updated.values)]
+  
+  print("Now showing a table of the updated beta.blocker variable")
+  print(dat[, table(beta.blocker)])
+  
+```
+
+### Checking statin
+```{r check_statin}
+  print("Check that statin is a numeric variable")
+
+  if(dat[, !is.numeric(statin)]){
+    print("statin is not numeric.")
+  }
+  if(dat[, is.numeric(statin)]){
+    print("statin is numeric, as expected.")
+  }
+  print("Here is a table of counts for each value of statin.")
+  print(dat[, table(statin)])
+  
+  print("There are unexpected values here.  Time to clean the data... The observed values do not clearly indicated possession (1) or lack of possession (0) of statins.  These will be converted to missing values, and the variable will be converted to a numeric variable.")
+  
+  dat[statin %nin% c("0", "1"), statin := NA]
+  
+  dat[, statin := as.numeric(as.character(statin))]
+  
+  print("Here is an updated table of the cleaned statin data.")
+  print(dat[, table(statin)])
+  print(sprintf("%d of the %d statin values were converted to NA values.", dat[, sum(is.na(statin))], dat[, length(statin)]))
+  
+```
+
+### Checking hospital
+```{r check_hospital}
+  print("Check that hospital is a numeric variable.")
+
+  if(dat[, !is.numeric(hospital)]){
+    print("hospital is not numeric.")
+  }
+  if(dat[, is.numeric(hospital)]){
+    print("hospital is a numeric variable, as expected.")    
+  }
+
+  print("Show a table of hospital value counts.")
+  print(dat[, table(hospital)])
+  print("The hospital variable looks reasonably clean.")
+```
+
+### Checking heart.attack
+```{r check_heart.attack}
+  print("Check that heart.attack is a numeric variable.")
+  if(dat[, !is.numeric(heart.attack)]){
+    print("heart.attack is not numeric.")
+  }
+  if(dat[, is.numeric(heart.attack)]){
+    print("heart.attack is a numeric variable, as expected.")    
+  }
+    
+  print("Show a table of heart.attack value counts.")
+
+  print(dat[, table(heart.attack)])
+  print("The heart.attack variable looks reasonably clean.")
+```
+
+### Checking death
+```{r check_death}
+  
+  print("Check that death is a numeric variable.")
+  if(dat[, !is.numeric(death)]){
+    print("death is not numeric.")
+  }
+  if(dat[, is.numeric(death)]){
+    print("death is a numeric variable, as expected.")    
+  }
+    
+  print("Show a table of death value counts.")
+
+  print(dat[, table(death)])
+  print("The death variable looks reasonably clean.")
+```
+
+```{r write.clean.data, echo=FALSE, eval=TRUE}
+fwrite(x = dat, file = "../Data/Homework 1 -- Cleaned Data.csv")
+```
+
+```{r question3, echo=FALSE, eval=TRUE}
+question.counter <- question.counter + 1
+```
+
+For all subsequent questions, please rely on the clean version of the data that you created.
+
+## Question `r question.counter`: Patient-Level Summaries
+
+For age, diabetes, hypertension, and kidney disease, what are the average values and standard deviations at baseline?  For age, this would be an average in years.  For the disease states, this would be the percentage of the population who have these conditions.  Display the results in a table.  Please round each number to 1 decimal place.  For percentages, this should appear in the format of 36.1% rather than 0.361.
+
+**Hint**:  Make sure to only use one entry per id.  It may help to sort the data by **id** and **begin** in *increasing order* using the **setorderv** function.
+
+```{r mean_clinical_factors}
+dat <- setorderv(x = dat, cols = c("id", "begin"), order = c(1,1))
+
+clinical.factors <- c("age", "diabetes", "hypertension", "kidney_disease")
+# Extract the first age entry for each patient.
+baseline.clinical.factors <- dat[, .SD[1], .SDcols = clinical.factors, by = "id"]
+
+mean.clinical.factors <- baseline.clinical.factors[, lapply(X = .SD, FUN = "mean", na.rm=TRUE), .SDcols = clinical.factors]  
+sd.clinical.factors <- baseline.clinical.factors[, lapply(X = .SD, FUN = "sd", na.rm=TRUE), .SDcols = clinical.factors]
+
+the.results <- bind_rows(mean.clinical.factors, sd.clinical.factors)
+the.results[, age := age/100]
+the.results <- 100*the.results
+
+the.results[, Metric := c("Mean", "SD")]
+
+
+setcolorder(x = the.results, neworder = c("Metric", clinical.factors))
+
+
+datatable(data = the.results[, lapply(X = .SD, FUN = "round.numerics", digits = 1)], rownames = FALSE)
+  
+```
+
+```{r question4, echo=FALSE, eval=TRUE}
+question.counter <- question.counter + 1
+```
+
+## Question `r question.counter`: Counting Outcomes
+
+How many trips to the hospital were there?  How many heart attacks were there in follow-up?  How many deaths occurred?  
+
+```{r outcome.counts}
+outcome.names <- c("hospital", "heart.attack", "death")
+
+outcomes <- dat[, lapply(X = .SD, FUN = "sum", na.rm=TRUE), .SDcols = outcome.names]
+
+datatable(data = outcomes, rownames = FALSE)
+
+```
+
+```{r question5, echo=FALSE, eval=TRUE}
+question.counter <- question.counter + 1
+```
+
+## Question `r question.counter`: Counting Outcomes by Medication Usage
+
+Now let's count the number of deaths, heart attacks, and hospitalizations *split by* medication usage.  Show how many of these outcomes occurred while the patients were taking each medicine (ACE Inhibitors, Beta Blockers, and Statins) -- and while they were not taking them.  Show your results in tables with each medicine's status in a row and each outcome's counts in a column.  Only display the results when the value of the medication is measured (not NA).
+
+```{r split.outcome.counts}
+
+ace.outcomes <- dat[!is.na(ace), lapply(X = .SD, FUN = "sum", na.rm=TRUE), .SDcols = outcome.names, by = "ace"]
+datatable(data = ace.outcomes, rownames = FALSE)
+
+beta.blocker.outcomes <- dat[!is.na(beta.blocker), lapply(X = .SD, FUN = "sum", na.rm=TRUE), .SDcols = outcome.names, by = "beta.blocker"]
+datatable(data = beta.blocker.outcomes, rownames = FALSE)
+
+statin.outcomes <- dat[!is.na(statin), lapply(X = .SD, FUN = "sum", na.rm=TRUE), .SDcols = outcome.names, by = "statin"]
+datatable(data = statin.outcomes, rownames = FALSE)
+
+```
+
+```{r question6, echo=FALSE, eval=TRUE}
+question.counter <- question.counter + 1
+```
+
+## Question `r question.counter`: Follow-Up
+
+Each patient may spend some time in follow-up on the medication and other periods not using it.  We want to get a sense of how much these medicines are used relative to the available time.  A **person-year** is defined as one year of observation for one patient.  10 person-years can be accumulated by following one person for 10 years, two for 5 apiece, three for 2, 7, and 1, respectively, or other combinations.  With this in mind, we want to study the utilization of medicines.
+
+- How many total person-years of observation do we have in the records?  What is the average number of years of observation per patient?
+
+**Reminder**:  Don't forget to convert your answers into the proper unit of time.  Please define a year as 365.25 days.  Round your answers to 1 decimal point.
+
+
+```{r observation}
+num.days.in.a.year = 365.25
+
+observation <- dat[, .(Num_Patients = length(unique(id)), Total_Person_Years_of_Followup = sum((end - begin)/num.days.in.a.year, na.rm = TRUE))]
+observation[, Average_Person_Years_of_Followup := Total_Person_Years_of_Followup / Num_Patients]
+
+datatable(data = round(x = observation, digits = 1), rownames = FALSE)
+```
+
+
+```{r question7, echo=FALSE, eval=TRUE}
+question.counter <- question.counter + 1
+```
+
+## Question `r question.counter`: Utilization
+
+- How many person-years did the patients spend on each medicine -- ACE Inhibitors, Beta Blockers, and Statins?  How much time was spent off of them?  How much time was missing from observation?
+
+**Reminder**:  Don't forget to convert your answers into the proper unit of time.  Please define a year as 365.25 days.  Round your answers to 1 decimal point.
+
+```{r utilization}
+
+ace.utilization <- dat[, .(Person.Years = round(sum(end - begin)/num.days.in.a.year, 1)), by = "ace"]
+datatable(data = ace.utilization, rownames = FALSE)
+
+beta.blocker.utilization <- dat[, .(Person.Years = round(sum(end - begin)/num.days.in.a.year, 1)), by = "beta.blocker"]
+datatable(data = beta.blocker.utilization, rownames = FALSE)
+
+
+statin.utilization <- dat[, .(Person.Years = round(sum(end - begin)/num.days.in.a.year, 1)), by = "statin"]
+datatable(data = statin.utilization, rownames = FALSE)
+
+
+```
+
+
+```{r question8, echo=FALSE, eval=TRUE}
+question.counter <- question.counter + 1
+```
+
+## Question `r question.counter`: Crude Event Rates
+
+Now we will compare the counts for the outcomes of hospitalization, heart attacks, and death against the relative follow-up time.  Compute the *crude rates* (the mean number of outcomes) per 100 person years of follow-up.  To do this, show the overall amount of follow-up time, the number of events for each outcome, and their ratio in units of events per 100 person years.  Remember to define a year as 365.25 days.  Round your results to 1 decimal place.
+
+
+```{r crude_rates}
+outcomes <- c("hospital", "heart.attack", "death")
+days.in.a.year <- 365.25
+
+crude.rate.calculation <- function(dat, by = NA, per.x = 100, digits = 1){
+  library(data.table)
+  library(DT)
+  
+  if(is.na(by)){
+    followup.years <- dat[, sum(end - begin)/days.in.a.year]
+    event.counts <- dat[, lapply(X = .SD, FUN = "sum", na.rm=TRUE), .SDcols = outcomes]
+    
+    
+    event.counts[, followup.years := followup.years]
+    rates.per.x <- event.counts[, .SD/(followup.years/per.x), .SDcols = outcomes]
+    
+    crude.rates <- bind_rows(event.counts, rates.per.x)
+    crude.rates[, Type := c("Count", sprintf("Mean Per %d Person Years", per.x))]
+    crude.rates[, Followup.Time := c(followup.years, followup.years/per.x)]
+  }
+  else{
+    followup.years <- dat[, .(followup.years = sum(end - begin)/days.in.a.year), by = by]
+    event.counts <- dat[, lapply(X = .SD, FUN = "sum", na.rm=TRUE), .SDcols = outcomes, by = by]
+  
+    event.counts <- merge(x = event.counts, y = followup.years, by = by)
+    rates.per.x <- event.counts[, .SD/(followup.years/per.x), .SDcols = outcomes, by = by]
+    
+    crude.rates <- rbindlist(l = list(event.counts, rates.per.x), fill = TRUE)
+    crude.rates[, Type := c("Count", "Count", rep(x = sprintf("Mean Per %d Person Years", per.x), length.out = 2))]
+  }
+  
+  setcolorder(x = crude.rates, neworder = c("Type", names(crude.rates)[names(crude.rates) %nin% "Type"]))
+  
+#  datatable(data = crude.rates[, lapply(X = .SD, FUN = "round.numerics", digits = 1)], rownames = TRUE)
+
+  return(crude.rates)
+}
+
+overall.crude.rates <- crude.rate.calculation(dat = dat)
+datatable(data = overall.crude.rates[, lapply(X = .SD, FUN = "round.numerics", digits = 1)], rownames = FALSE)
+
+```
+
+
+```{r question9, echo=FALSE, eval=TRUE}
+question.counter <- question.counter + 1
+```
+
+## Question `r question.counter`:  Crude Event Rates By Medication Usage
+
+How do the crude rates of hospitalization, heart attacks, and death per 100 person-years of follow-up differ depending on medication usage?  Show the number of events and crude rates while taking and not taking each medicine:
+
+
+* ACE Inhibitors
+
+```{r crude.rates.ace}
+ace.crude.rates <- crude.rate.calculation(dat = dat, by = "ace")
+datatable(data = ace.crude.rates[, lapply(X = .SD, FUN = "round.numerics", digits = 1)], rownames = FALSE)
+```
+
+* Beta Blockers
+
+```{r crude.rates.beta.blocker}
+beta.blocker.crude.rates <- crude.rate.calculation(dat = dat, by = "beta.blocker")
+datatable(data = beta.blocker.crude.rates[, lapply(X = .SD, FUN = "round.numerics", digits = 1)], rownames = FALSE)
+```
+
+
+* Statins
+
+```{r crude.rates.statin}
+statin.crude.rates <- crude.rate.calculation(dat = dat[!is.na(statin)], by = "statin")
+datatable(data = statin.crude.rates[, lapply(X = .SD, FUN = "round.numerics", digits = 1)], rownames = FALSE)
+```
+
+
+```{r question10, echo=FALSE, eval=TRUE}
+question.counter <- question.counter + 1
+```
+
+## Question `r question.counter`: Unadjusted Odds Ratios
+
+What is the impact of each medication?  One way to calculate their impact is with the *unadjusted odds ratio*, which compares the rate of outcomes while taking the medicine to the rate without taking the medicine.  For each medicine, compute the unadjusted odds ratios for hospitalization, heart attacks, and death.  Round your answers to 2 decimal places.
+
+```{r unadjusted.odds.ratio}
+unadjusted.odds.ratio <- function(crude.rates, med, outcomes, rate.identifier = "Mean Per 100 Person Years"){
+  library(data.table)
+  library(plyr)
+
+  odds.ratios <- crude.rates[Type == rate.identifier & get(med) == 1, .SD, .SDcols = outcomes] / crude.rates[Type == rate.identifier & get(med) == 0, .SD, .SDcols = outcomes]
+  
+  odds.ratios[, Type := "Odds Ratio"]
+  odds.ratios[, eval(med) := NA]
+  
+  res <- bind_rows(crude.rates, odds.ratios)
+  
+  return(res)
+}
+```
+
+* ACE Inhibitors
+
+```{r unadjusted.odds.ratio.ace}
+ace.unadjusted.odds.ratio <- unadjusted.odds.ratio(crude.rates = ace.crude.rates, med = "ace", outcomes = outcomes)
+datatable(data = ace.unadjusted.odds.ratio[, lapply(X = .SD, FUN = "round.numerics", digits = 2)], rownames = FALSE)
+
+```
+
+* Beta Blockers
+
+```{r unadjusted.odds.ratio.beta.blocker}
+beta.blocker.unadjusted.odds.ratio <- unadjusted.odds.ratio(crude.rates = beta.blocker.crude.rates, med = "beta.blocker", outcomes = outcomes)
+datatable(data = beta.blocker.unadjusted.odds.ratio[, lapply(X = .SD, FUN = "round.numerics", digits = 2)], rownames = FALSE)
+```
+
+
+* Statins
+
+```{r unadjusted.odds.ratio.statin}
+statin.unadjusted.odds.ratio <- unadjusted.odds.ratio(crude.rates = statin.crude.rates, med = "statin", outcomes = outcomes)
+datatable(data = statin.unadjusted.odds.ratio[, lapply(X = .SD, FUN = "round.numerics", digits = 2)], rownames = FALSE)
+```
+
+
+
+
+
+
+
