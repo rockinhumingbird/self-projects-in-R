@@ -1,6 +1,5 @@
 ---
 title: "Homework 1 — Solutions"
-author: "David Shilane"
 date: "October 6th, 2017"
 output:
   prettydoc::html_pretty:
