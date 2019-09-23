@@ -1,0 +1,112 @@
+---
+title: "textmining"
+author: "Zoe"
+date: "9/18/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load libraries}
+library(tidyverse)
+library(tidytext)
+library(tm)
+library(tidyr)
+library(SnowballC)
+library(stringr)
+library(wordcloud)
+library(readtext)
+```
+
+```{r read data}
+file1 <- read_csv("consulting.csv")
+text<- file1$text
+#group by size see the word count
+consulting <- file1 %>%
+  group_by(size) %>%
+  mutate(row_number())%>%
+  unnest_tokens(word, text)%>%
+  count(word,sort= TRUE)%>%
+  ungroup()
+```
+
+```{r get rid of stopwords}
+data(stop_words)
+consulting1 <- consulting %>% anti_join(stop_words)
+```
+
+```{r add total number of words to the table}
+totalwords <- consulting1 %>% group_by(size) %>% summarize(total = sum(n))
+
+wordss <- left_join(consulting1, totalwords)
+```
+
+```{r depict the word ratio by size }
+ggplot(wordss, aes(n/total, fill = size)) + geom_histogram(show.legend = FALSE) + xlim(NA, 0.0009) + facet_wrap(~size, ncol = 3, scales = "free_y")
+```
+
+
+```{r tf_idf by size and desc by freq}
+wordss <- wordss %>% bind_tf_idf(word,size,n)
+wordss
+wordss %>% select(-total) %>% arrange(desc(tf_idf))
+wordss
+```
+
+```{r}
+ggplot(wordss, aes(n/total, fill = size)) + geom_histogram(show.legend = FALSE) + xlim(NA, 0.0009) +
+facet_wrap(~size, ncol = 3, scales = "free_y")
+```
+
+```{r remove related stopwords}
+mystopwords <- data_frame(word = c("Kelloggís","zonta","debt","pdri", "polaris", "acuity", "kelloggis","ascenion", "aptmetrics", "vcard","pims", "nigeria", "hedging", "arnold", "kiddy","chatham","ryan","abe","pdriís", "ofosu", "ademola", "azeez", "geistt","run","andrew","ldw","ation", "kathleen", "lundquist", "neal", "schmitt","park","candidatesí","adeniyi","angie", "ofosu", "ª", "dci", "linda","kappy","brad","ceb","ascension","jaffee","life","helen","swedish","york", "fresh","bienn", "ctd","combines","care","kpis","mda","najafi","odgers",
+                                 "bring","dattner","seattle","geri","í","11","shores","class","kelloggís","È","Ö","care","pharmaceutical","aptimetricsí","arctic","berndston"))
+
+wordss<- wordss%>%anti_join(mystopwords)
+
+```
+
+
+
+```{r unique word with desceding tf-idf top 15}
+wordss%>%
+arrange(desc(tf_idf)) %>%
+mutate(word = factor(word, levels = rev(unique(word)))) %>% group_by(size)%>%
+top_n(15) %>%
+ungroup %>%
+ggplot(aes(word, tf_idf, fill = size)) + geom_col(show.legend = FALSE) +
+labs(x = NULL, y = "tf-idf") +
+facet_wrap(~size, ncol = 3, scales = "free") + coord_flip()
+
+
+```
+```{r term frequency by size top 10}
+wordss %>%
+group_by(size) %>%
+top_n(10, tf_idf) %>%
+ungroup() %>%
+mutate(word = reorder(word, tf_idf)) %>% ggplot(aes(word, tf_idf, fill = size)) + geom_col(show.legend = FALSE) +
+labs(x = NULL, y = "tf-idf") + facet_wrap(~size, ncol = 3, scales = "free") + coord_flip()
+```
+
+```{r lda on size of firm}
+sizedtm <- wordss%>%cast_dtm(size, word, n)
+
+sizelda <- LDA(sizedtm, k = 3, control = list(seed =1234))
+
+sizelda
+
+sizetopics<- tidy(sizelda, matrix = "beta")
+sizetopics
+
+top_terms <- sizetopics %>%
+      group_by(topic) %>%
+      top_n(15, beta) %>%
+      ungroup() %>% arrange(topic, -beta)
+
+top_terms %>%
+mutate(term = reorder(term, beta)) %>% ggplot(aes(term, beta, fill = factor(topic))) + geom_col(show.legend = FALSE) +
+facet_wrap(~ topic, scales = "free") + coord_flip()
+```
