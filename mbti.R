@@ -7,7 +7,7 @@ library(SnowballC)
 library(stringr)
 library(wordcloud)
 
-mbti<-read_csv("C:/Users/soviv/Downloads/mbti_1.csv")
+mbti<-read_csv("mbti_1.csv")
 #remove special characters
 mbti$posts <- str_replace_all(mbti$posts,"<.*?>","")
 removehttp <- function(x) gsub("http.*", " ", x)
