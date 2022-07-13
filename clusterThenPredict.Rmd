@@ -6,8 +6,6 @@ output: html_document
 #### In this illustration, we will cluster our data before constructing predictive models. 
 
 ## Read Wine Data
-You must read the data before trying to run code on your own machine. To read data use the following code after setting your working directory. To set your working directory, modify the following to set the file path for the folder where the data file resides.
-setwd('c:/thatawesomeclass/)
 
 ```{r, warning=F,message=F, echo=FALSE}
 setwd('C:/myFiles/ConsultingAndService/CourseDevelopment/AAFM2/Slides/2_Clustering')
