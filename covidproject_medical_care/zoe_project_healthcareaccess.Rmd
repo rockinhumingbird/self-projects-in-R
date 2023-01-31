@@ -1,0 +1,341 @@
+---
+title: "Delayed getting or not getting medical care during COVID times - Census data"
+author: "Zoe Zhu"
+date: "8/1/2021"
+output: 
+    flexdashboard::flex_dashboard:
+      storyboard: true
+      social: menu
+      source: embed
+      theme: yeti
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,message = FALSE, warning = FALSE)
+```
+
+
+```{r libraries,include=FALSE}
+library(plm)
+library(data.table)
+library(gridExtra)
+library(grid)
+library(DT)
+library(rbibutils)
+library(plotly)
+library(ggthemes) 
+library(rmarkdown)
+library(emmeans)
+library(knitr)
+library(dplyr)
+library(viridisLite)
+library(forecast)
+library(flexdashboard)
+library(highcharter)
+library(ggplot2)
+library(shiny)
+```
+
+
+```{r include=FALSE}
+# Create a custom theme for the plots. 
+custom_theme <- hc_theme(
+  colors = c('#5CACEE', 'green', 'red'),
+  chart = list(
+         backgroundColor = '#FAFAFA', 
+         plotBorderColor = "black"),
+  xAxis = list(
+         gridLineColor = "C9C9C9", 
+         labels = list(style = list(color = "#333333")), 
+         lineColor = "#C9C9C9", 
+         minorGridLineColor = "#C9C9C9", 
+         tickColor = "#C9C9C9", 
+         title = list(style = list(color = "#333333"))), 
+  yAxis = list(
+         gridLineColor = "#C9C9C9", 
+         labels = list(style = list(color = "#333333")), 
+         lineColor = "#C9C9C9", 
+         minorGridLineColor = "#C9C9C9", 
+         tickColor = "#C9C9C9", 
+         tickWidth = 1, 
+         title = list(style = list(color = "#333333"))),   
+  title = list(style = list(color = '#333333', fontFamily = "Lato")),
+  subtitle = list(style = list(color = '#666666', fontFamily = "Lato")),
+  legend = list(
+         itemStyle = list(color = "#333333"), 
+         itemHoverStyle = list(color = "#FFF"), 
+         itemHiddenStyle = list(color = "#606063")), 
+  credits = list(style = list(color = "#666")),
+  itemHoverStyle = list(color = 'gray'))
+```
+
+```{r import data, include = FALSE}
+# import data 
+df = read.csv("Indicators_of_Reduced_Access_to_Care_Due_to_the_Coronavirus_Pandemic_During_Last_4_Weeks.csv")
+num.lines <- 100
+question.counter <- 0
+```
+
+
+### Details about the dataset
+
+```{r load data, include= FALSE}
+dat <- fread("Indicators_of_Reduced_Access_to_Care_Due_to_the_Coronavirus_Pandemic_During_Last_4_Weeks.csv")
+```
+**Data table**
+*Show dataset snippet first 50 rows*
+```{r}
+# Create datatable. 
+datatable(dat[1:50,],rownames = FALSE,class = 'cell-border stripe',
+          extensions = "Scroller",
+          options=list(deferRender = FALSE, 
+                       scrollY = 200, 
+                       scrollCollapse = TRUE,
+                       scroller = TRUE,
+                       dom = 't'))
+
+```
+
+***
+The exercise is from CDC's Household Pulse Survey. 
+The survey was designed to gauge the impact of the pandemic on employment status, consumer spending, food security, housing, education disruptions, and dimensions of physical and mental wellness.
+
+- This analysis is focused on these specific questions: 
+At any time in the last 4 weeks, did you DELAY getting medical care because of the coronavirus pandemic? 
+At any time in the last 4 weeks, did you need medical care for something other than coronavirus, but DID NOT GET IT because of the coronavirus pandemic?
+ 
+- Data source: https://www.cdc.gov/nchs/covid19/pulse/reduced-access-to-care.htm
+
+
+
+### Overall trend of United States
+```{r subset groups by united states, include= FALSE, echo= FALSE}
+dftotal = subset(df, Group == 'National Estimate')
+#df_race
+dftotal= subset(dftotal, Indicator =='Delayed or Did Not Get Care, Last 4 Weeks')
+
+t = highchart() %>% 
+    hc_add_series(dftotal, hcaes(x = Time.Period, y = Value), type = "line") %>%
+    hc_tooltip(crosshairs = TRUE, borderWidth = 1.5, headerFormat = "", pointFormat = paste("Week: <b>{point.x}</b> <br> Percentage: <b>{point.y}</b>")) %>%
+    hc_title(text = "Percentage of people delayed getting or not getting care during COVID") %>%  hc_subtitle(text = "2020 April 14 (Week1)- 2021 Jun 28 (Week33)") %>% 
+    hc_xAxis(title = list(text = "Weeks")) %>%
+     hc_yAxis(labels = list(style = list(fontSize = 10)),
+             title = list(text = "percentage",
+                          style = list(fontSize = 10)),
+        plotLines = list(
+          list(color = "black", width = 1, dashStyle = "Dash", 
+               value = mean(na.omit(dftotal)$Value)
+,
+               label = list(text = "Mean = 36.12", style = list(color = "Black", fontSize = 12))))) %>%    
+    hc_legend(verticalAlign = 'top', enabled = FALSE) %>% 
+    hc_add_theme(custom_theme)
+```
+
+```{r,echo = FALSE}
+t
+```
+
+***
+- A line chart is helpful to identify trends over time of a continuous variable.
+
+We can tell from the graph that:
+Overall the percentage of those either not getting medical care or delayed getting medical care in the US got less and less as the spread of COVID-19 slowed down.
+
+### Jun 20 to July 5 Week 33 Pie Chart 1
+```{r week 33 details, echo = FALSE, include= FALSE}
+df2 = read.csv("desc.csv")
+pieage = subset(df2, group == 'Age' )
+age_color <- rev(plasma(7))
+```
+
+```{r echo=FALSE}
+highchart() %>% 
+  hc_add_series(pieage, hcaes(x = subgroup, y = as.numeric(Delay.or.did.not.get.medical.care), 
+                               color = age_color), type = "pie") %>%
+  hc_tooltip(borderWidth = 1.5, headerFormat = "", pointFormat = paste("Age: <b>{point.subgroup} ({point.percentage:.1f}%)</b> <br>")) %>%  
+  hc_title(text = "<b>Week 33 Delayed getting or not getting care -  by Age </b>", style = (list(fontSize = '16px'))) %>% 
+  hc_subtitle(text = "2021 Jun 28 - 2021 July 5 (Week33)", style = (list(fontSize = '10px'))) %>%
+  hc_plotOptions(pie = list(dataLabels = list(distance = 5, 
+                            style = list(fontSize = 10)), 
+                            size = 200)) %>% 
+  hc_add_theme(custom_theme)
+```
+
+***
+
+- Pie chart is useful for a straighforward presentation of categorical variables.
+It enables all audience to see a data comparison at a glance to make an immediate analysis or to understand information quickly.
+- We can tell from the graph that during the week of Jun 28 2021, highest percentage of age group that did not get or delayed getting medical care was from 30 to 39 years old.
+
+
+### Jun 20 to July 5 Week 33 Pie Chart 2
+```{r week 33 details2, echo = FALSE, include= FALSE}
+piehousehold = subset(df2, group == 'Household income' )
+piehousehold
+household_color <- rev(plasma(9))
+```
+
+```{r echo=FALSE}
+
+highchart() %>% 
+  hc_add_series(piehousehold, hcaes(x = subgroup, y = as.numeric(Delay.or.did.not.get.medical.care), 
+                               color = household_color), type = "pie") %>%
+  hc_tooltip(borderWidth = 1.5, headerFormat = "", pointFormat = paste("Income: <b>{point.subgroup} ({point.percentage:.1f}%)</b> <br> ")) %>%  
+  hc_title(text = "<b>Week 33 Delayed getting or did not get care- by Income </b>", style = (list(fontSize = '16px'))) %>% 
+  hc_subtitle(text = "2021 Jun 28 - 2021 July 5 (Week33)", style = (list(fontSize = '10px'))) %>%
+  hc_plotOptions(pie = list(dataLabels = list(distance = 5, 
+                            style = list(fontSize = 10)), 
+                            size = 200)) %>% 
+  hc_add_theme(custom_theme)
+```
+
+
+***
+We can tell from the graph that:
+- Income groups are about equally affected when it comes to delayed or not getting medical care, although the most affected group is that with less than $25,000 household income.
+
+
+### Break Down by Race/Ethinicity
+```{r subset groups by RACE, include= FALSE}
+df_race = subset(df, Group == 'By Race/Hispanic ethnicity')
+#df_race
+df_race = subset(df_race, Indicator =='Delayed or Did Not Get Care, Last 4 Weeks')
+ra_color <- c("#8dcb93", "#87CEEB","#f4646c", "#cb7fd9", "#856d4d") # baby blue & pink
+
+p = highchart() %>% 
+    hc_add_series(df_race, hcaes(x =Time.Period, y =df_race$Value, group = Subgroup), type = "line", color = ra_color) %>%
+    hc_tooltip(crosshairs = TRUE, borderWidth = 1, headerFormat = "", pointFormat = paste("Week: <b>{point.x}</b> <br>","Race: <b>{point.Subgroup}</b> <br>", "Rate: <b>{point.y}</b>")) %>%
+    hc_title(text = "Delayed or not getting medical care for the last 4 weeks- By Race") %>% 
+    hc_subtitle(text = "2020 April 14 (Week1)- 2021 Jun 28 (Week33)") %>%
+    hc_xAxis(title = list(text = "Weeks")) %>%
+    hc_yAxis(title = list(text = "Delayed or not getting medical care percentage"),
+             allowDecimals = TRUE)%>% 
+    hc_add_theme(custom_theme)
+```
+
+```{r showing race graph}
+# Create line plot.
+p
+```
+
+***
+It is helpful to look at the line chart by subgroups, such as sociodemographic factors.
+
+We can tell from the graph that:
+
+- Non-hispanic white overall has the lowest percentage of delayed getting or not getting medical care from week 15 to week 33.
+
+- All groups appears to resume getting more medical care after the pandemic peak, after week 20.
+
+
+### Let us look at the gender differences as well.
+
+```{r gender high chart}
+df_gender = subset(df, Group == 'By Sex' )
+df_Gender = subset(df_gender, Indicator =='Delayed or Did Not Get Care, Last 4 Weeks')
+sex_color <- c("#EE6AA7", "#87CEEB") # baby blue & pink
+# Create line plot.
+g <- highchart() %>% 
+    hc_add_series(df_Gender, hcaes(x =Time.Period, y = df_Gender$Value, group = Subgroup), type = "line", color = sex_color) %>%
+    hc_tooltip(crosshairs = TRUE, borderWidth = 1.5, headerFormat = "", pointFormat = paste("Week: <b>{point.x}</b> <br>","Gender: <b>{point.Subgroup}</b> <br>", "Rate: <b>{point.y}</b>")) %>%
+    hc_title(text = "Delayed or not getting medical care for the last 4 weeks- By Gender") %>% 
+    hc_subtitle(text = "2020 April 14 (Week1)- 2021 July 5 (Week33)") %>%
+    hc_xAxis(title = list(text = "Weeks")) %>%
+    hc_yAxis(title = list(text = "Delayed or not getting medical care percentage"),
+             allowDecimals = TRUE) %>% 
+    hc_add_theme(custom_theme)
+g
+```
+
+***
+
+We can tell from the graph that:
+
+- Females consistently delay or are not get medical care than males during the pandemic
+
+```{r glm1 gender, echo = FALSE, include = FALSE}
+fitgender <- glm(Value ~ Subgroup+Time.Period, data=df_Gender, family=Gamma(link = 'log'))
+#summary(fitgender)
+# Compute the analysis of variance
+#gender.aov <- aov(Value ~ Subgroup+Time.Period, data = df_Gender)
+# Summary of the analysis
+#summary(gender.aov)
+##emmip(fitgender, Subgroup ~ Time.Period)
+gendermeans<- emmeans(fitgender,"Subgroup", type = "response")
+#pairs(gendermeans, reverse = TRUE)
+```
+
+
+```{r kable, echo = FALSE, results='asis'}
+kable(gendermeans)
+```
+
+
+```{r combine data, echo = FALSE, include= FALSE}
+df_state = subset(df, Group == 'By State' )
+df_state = subset(df_state, Indicator =='Delayed or Did Not Get Care, Last 4 Weeks')
+names(df_state)[names(df_state) == "State"] <- "state_name"
+df_state1 = subset(df_state, Time.Period == 1)
+df_state33 = subset(df_state, Time.Period ==33 )
+```
+
+### Is there a change by geographic factor
+```{r echo = FALSE}
+news<- rbind(df_state33,df_state1)
+news$state_name <- tolower(news$state_name)
+news$Time.Period[news$Time.Period == "33"]<- 'Week33'
+news$Time.Period[news$Time.Period == "1"]<- 'Week1'
+states_map <- map_data("state")
+
+```
+
+```{r, fig.height = 4, dev = 'jpeg',echo = FALSE}
+g <- ggplot(news, aes(map_id = state_name)) +
+  geom_map(aes(fill = Value), map = states_map) +
+  expand_limits(x = states_map$long, y = states_map$lat) +
+  facet_wrap( ~ Time.Period) 
+gplo<- ggplotly(g+ scale_fill_viridis_c(option = "magma")+scale_fill_gradient(low = "grey", high = "brown")+theme_economist()+
+  ggtitle("Week 1 and Week 33 change by State"))
+gplo
+```
+
+
+***
+- For geographic data, interactive map is a great tool to show readers a straighforward overview across regions.
+
+- All states gradually increased access to medical care over the week 1 to week 33. New Mexico appears to be the state with the highest percentage of delayed or not getting medical care even at week 33.
+
+
+### Breakdown by Age group
+
+```{r age high chart}
+df_age = subset(df, Group == 'By Age' )
+df_age = subset(df_age, Indicator =='Delayed or Did Not Get Care, Last 4 Weeks')
+age_color <- c("#EE6AA7", "#87CEEB", "#59d4ff", "#cb7fd9", "#856d4d","#59ffda", "#c2bcc0") # 
+a<- highchart() %>% 
+    hc_add_series(df_age, hcaes(x =Time.Period, y = df_age$Value, group = Subgroup), type = "line", color = age_color) %>%
+    hc_tooltip(crosshairs = TRUE, borderWidth = 1, headerFormat = "", pointFormat = paste("Week: <b>{point.x}</b> <br>","Age Group: <b>{point.Subgroup}</b> <br>", "Rate: <b>{point.y}</b>")) %>%
+    hc_title(text = "Delayed or not getting medical care for the last 4 weeks- By Age") %>% 
+    hc_subtitle(text = "2020 April 14 (Week1)- 2021 July 5 (Week33)") %>%
+    hc_xAxis(title = list(text = "Weeks")) %>%
+    hc_yAxis(title = list(text = "Delayed or not getting medical care percentage"),
+             allowDecimals = TRUE,
+             plotLines = list(list(
+                    color = "black", width = 1, dashStyle = "Dash",
+                    label = list(
+                                 style = list(color = 'black'))))) %>% 
+    hc_add_theme(custom_theme)
+```
+
+```{r}
+a
+
+```
+
+### ~Thank You! { .colored }
+
+**Thank you for checking out my project!**  
+
+Please leave me any comment or suggestion if you have any, shoot an email to heyzola@gmail.com.
+
+<br>

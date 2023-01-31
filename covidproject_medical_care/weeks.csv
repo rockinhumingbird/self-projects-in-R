@@ -1,0 +1,109 @@
+Group,Subgroup,Week,Time Period Label,Time Period Start Date,Time Period End Date,Value
+age,18 - 29 years,1,Apr 23 - May 5,04/23/2020 12:00:00 AM,05/05/2020 12:00:00 AM,40.8
+age,30 - 39 years,1,Apr 23 - May 5,04/23/2020 12:00:00 AM,05/05/2020 12:00:00 AM,41.8
+age,40 - 49 years,1,Apr 23 - May 5,04/23/2020 12:00:00 AM,05/05/2020 12:00:00 AM,45.6
+age,50 - 59 years,1,Apr 23 - May 5,04/23/2020 12:00:00 AM,05/05/2020 12:00:00 AM,46
+age,60 - 69 years,1,Apr 23 - May 5,04/23/2020 12:00:00 AM,05/05/2020 12:00:00 AM,46.4
+age,70 - 79 years,1,Apr 23 - May 5,04/23/2020 12:00:00 AM,05/05/2020 12:00:00 AM,42.2
+age,80 years and above,1,Apr 23 - May 5,04/23/2020 12:00:00 AM,05/05/2020 12:00:00 AM,35.6
+gender,Male,1,Apr 23 - May 5,04/23/2020 12:00:00 AM,05/05/2020 12:00:00 AM,40.1
+gender,Female,1,Apr 23 - May 5,04/23/2020 12:00:00 AM,05/05/2020 12:00:00 AM,47.1
+race,Hispanic or Latino,1,Apr 23 - May 5,04/23/2020 12:00:00 AM,05/05/2020 12:00:00 AM,41.3
+race,"Non-Hispanic White, single race",1,Apr 23 - May 5,04/23/2020 12:00:00 AM,05/05/2020 12:00:00 AM,44.6
+race,"Non-Hispanic Black, single race",1,Apr 23 - May 5,04/23/2020 12:00:00 AM,05/05/2020 12:00:00 AM,42.5
+race,"Non-Hispanic Asian, single race",1,Apr 23 - May 5,04/23/2020 12:00:00 AM,05/05/2020 12:00:00 AM,37.8
+race,"Non-Hispanic, other races and multiple races",1,Apr 23 - May 5,04/23/2020 12:00:00 AM,05/05/2020 12:00:00 AM,49.2
+education,Less than a high school diploma,1,Apr 23 - May 5,04/23/2020 12:00:00 AM,05/05/2020 12:00:00 AM,40.9
+education,High school diploma or GED,1,Apr 23 - May 5,04/23/2020 12:00:00 AM,05/05/2020 12:00:00 AM,39.4
+education,Some college/Associates degree,1,Apr 23 - May 5,04/23/2020 12:00:00 AM,05/05/2020 12:00:00 AM,44.7
+education,Bachelor degree or higher,1,Apr 23 - May 5,04/23/2020 12:00:00 AM,05/05/2020 12:00:00 AM,47.6
+age,18 - 29 years,6,June 4 - June 9,06/04/2020 12:00:00 AM,06/09/2020 12:00:00 AM,39.8
+age,30 - 39 years,6,June 4 - June 9,06/04/2020 12:00:00 AM,06/09/2020 12:00:00 AM,45.1
+age,40 - 49 years,6,June 4 - June 9,06/04/2020 12:00:00 AM,06/09/2020 12:00:00 AM,47.6
+age,50 - 59 years,6,June 4 - June 9,06/04/2020 12:00:00 AM,06/09/2020 12:00:00 AM,47.2
+age,60 - 69 years,6,June 4 - June 9,06/04/2020 12:00:00 AM,06/09/2020 12:00:00 AM,45.2
+age,70 - 79 years,6,June 4 - June 9,06/04/2020 12:00:00 AM,06/09/2020 12:00:00 AM,41.2
+age,80 years and above,6,June 4 - June 9,06/04/2020 12:00:00 AM,06/09/2020 12:00:00 AM,37.9
+gender,Male,6,June 4 - June 9,06/04/2020 12:00:00 AM,06/09/2020 12:00:00 AM,39.5
+gender,Female,6,June 4 - June 9,06/04/2020 12:00:00 AM,06/09/2020 12:00:00 AM,49.2
+race,Hispanic or Latino,6,June 4 - June 9,06/04/2020 12:00:00 AM,06/09/2020 12:00:00 AM,44.5
+race,"Non-Hispanic White, single race",6,June 4 - June 9,06/04/2020 12:00:00 AM,06/09/2020 12:00:00 AM,44.5
+race,"Non-Hispanic Black, single race",6,June 4 - June 9,06/04/2020 12:00:00 AM,06/09/2020 12:00:00 AM,43.8
+race,"Non-Hispanic Asian, single race",6,June 4 - June 9,06/04/2020 12:00:00 AM,06/09/2020 12:00:00 AM,37.2
+race,"Non-Hispanic, other races and multiple races",6,June 4 - June 9,06/04/2020 12:00:00 AM,06/09/2020 12:00:00 AM,54.6
+education,Less than a high school diploma,6,June 4 - June 9,06/04/2020 12:00:00 AM,06/09/2020 12:00:00 AM,40.8
+education,High school diploma or GED,6,June 4 - June 9,06/04/2020 12:00:00 AM,06/09/2020 12:00:00 AM,40.2
+education,Some college/Associates degree,6,June 4 - June 9,06/04/2020 12:00:00 AM,06/09/2020 12:00:00 AM,47.5
+education,Bachelor degree or higher,6,June 4 - June 9,06/04/2020 12:00:00 AM,06/09/2020 12:00:00 AM,46.5
+age,18 - 29 years,13,Aug 19 - Aug 31,08/19/2020 12:00:00 AM,08/31/2020 12:00:00 AM,38.7
+age,30 - 39 years,13,Aug 19 - Aug 31,08/19/2020 12:00:00 AM,08/31/2020 12:00:00 AM,40.9
+age,40 - 49 years,13,Aug 19 - Aug 31,08/19/2020 12:00:00 AM,08/31/2020 12:00:00 AM,42.3
+age,50 - 59 years,13,Aug 19 - Aug 31,08/19/2020 12:00:00 AM,08/31/2020 12:00:00 AM,42.4
+age,60 - 69 years,13,Aug 19 - Aug 31,08/19/2020 12:00:00 AM,08/31/2020 12:00:00 AM,36.7
+age,70 - 79 years,13,Aug 19 - Aug 31,08/19/2020 12:00:00 AM,08/31/2020 12:00:00 AM,33.6
+age,80 years and above,13,Aug 19 - Aug 31,08/19/2020 12:00:00 AM,08/31/2020 12:00:00 AM,25.4
+gender,Male,13,Aug 19 - Aug 31,08/19/2020 12:00:00 AM,08/31/2020 12:00:00 AM,35.1
+gender,Female,13,Aug 19 - Aug 31,08/19/2020 12:00:00 AM,08/31/2020 12:00:00 AM,42.7
+race,Hispanic or Latino,13,Aug 19 - Aug 31,08/19/2020 12:00:00 AM,08/31/2020 12:00:00 AM,42.5
+race,"Non-Hispanic White, single race",13,Aug 19 - Aug 31,08/19/2020 12:00:00 AM,08/31/2020 12:00:00 AM,38.1
+race,"Non-Hispanic Black, single race",13,Aug 19 - Aug 31,08/19/2020 12:00:00 AM,08/31/2020 12:00:00 AM,40.3
+race,"Non-Hispanic Asian, single race",13,Aug 19 - Aug 31,08/19/2020 12:00:00 AM,08/31/2020 12:00:00 AM,34.8
+race,"Non-Hispanic, other races and multiple races",13,Aug 19 - Aug 31,08/19/2020 12:00:00 AM,08/31/2020 12:00:00 AM,44.4
+education,Less than a high school diploma,13,Aug 19 - Aug 31,08/19/2020 12:00:00 AM,08/31/2020 12:00:00 AM,41.6
+education,High school diploma or GED,13,Aug 19 - Aug 31,08/19/2020 12:00:00 AM,08/31/2020 12:00:00 AM,33.2
+education,Some college/Associates degree,13,Aug 19 - Aug 31,08/19/2020 12:00:00 AM,08/31/2020 12:00:00 AM,41.7
+education,Bachelor degree or higher,13,Aug 19 - Aug 31,08/19/2020 12:00:00 AM,08/31/2020 12:00:00 AM,41.5
+age,18 - 29 years,18,Oct 28 - Nov 9,10/28/2020 12:00:00 AM,11/09/2020 12:00:00 AM,41.5
+age,30 - 39 years,18,Oct 28 - Nov 9,10/28/2020 12:00:00 AM,11/09/2020 12:00:00 AM,40.2
+age,40 - 49 years,18,Oct 28 - Nov 9,10/28/2020 12:00:00 AM,11/09/2020 12:00:00 AM,36.9
+age,50 - 59 years,18,Oct 28 - Nov 9,10/28/2020 12:00:00 AM,11/09/2020 12:00:00 AM,37
+age,60 - 69 years,18,Oct 28 - Nov 9,10/28/2020 12:00:00 AM,11/09/2020 12:00:00 AM,33.1
+age,70 - 79 years,18,Oct 28 - Nov 9,10/28/2020 12:00:00 AM,11/09/2020 12:00:00 AM,26.8
+age,80 years and above,18,Oct 28 - Nov 9,10/28/2020 12:00:00 AM,11/09/2020 12:00:00 AM,20.9
+gender,Male,18,Oct 28 - Nov 9,10/28/2020 12:00:00 AM,11/09/2020 12:00:00 AM,32.1
+gender,Female,18,Oct 28 - Nov 9,10/28/2020 12:00:00 AM,11/09/2020 12:00:00 AM,39.6
+race,Hispanic or Latino,18,Oct 28 - Nov 9,10/28/2020 12:00:00 AM,11/09/2020 12:00:00 AM,44.3
+race,"Non-Hispanic White, single race",18,Oct 28 - Nov 9,10/28/2020 12:00:00 AM,11/09/2020 12:00:00 AM,33.3
+race,"Non-Hispanic Black, single race",18,Oct 28 - Nov 9,10/28/2020 12:00:00 AM,11/09/2020 12:00:00 AM,36.6
+race,"Non-Hispanic Asian, single race",18,Oct 28 - Nov 9,10/28/2020 12:00:00 AM,11/09/2020 12:00:00 AM,37.7
+race,"Non-Hispanic, other races and multiple races",18,Oct 28 - Nov 9,10/28/2020 12:00:00 AM,11/09/2020 12:00:00 AM,44.6
+education,Less than a high school diploma,18,Oct 28 - Nov 9,10/28/2020 12:00:00 AM,11/09/2020 12:00:00 AM,39.6
+education,High school diploma or GED,18,Oct 28 - Nov 9,10/28/2020 12:00:00 AM,11/09/2020 12:00:00 AM,31.9
+education,Some college/Associates degree,18,Oct 28 - Nov 9,10/28/2020 12:00:00 AM,11/09/2020 12:00:00 AM,39.2
+education,Bachelor degree or higher,18,Oct 28 - Nov 9,10/28/2020 12:00:00 AM,11/09/2020 12:00:00 AM,35.9
+age,18 - 29 years,23,Jan 20 - Feb 1,01/20/2021 12:00:00 AM,02/01/2021 12:00:00 AM,37.4
+age,30 - 39 years,23,Jan 20 - Feb 1,01/20/2021 12:00:00 AM,02/01/2021 12:00:00 AM,38.2
+age,40 - 49 years,23,Jan 20 - Feb 1,01/20/2021 12:00:00 AM,02/01/2021 12:00:00 AM,37.3
+age,50 - 59 years,23,Jan 20 - Feb 1,01/20/2021 12:00:00 AM,02/01/2021 12:00:00 AM,37.4
+age,60 - 69 years,23,Jan 20 - Feb 1,01/20/2021 12:00:00 AM,02/01/2021 12:00:00 AM,32.8
+age,70 - 79 years,23,Jan 20 - Feb 1,01/20/2021 12:00:00 AM,02/01/2021 12:00:00 AM,28.4
+age,80 years and above,23,Jan 20 - Feb 1,01/20/2021 12:00:00 AM,02/01/2021 12:00:00 AM,25.9
+gender,Male,23,Jan 20 - Feb 1,01/20/2021 12:00:00 AM,02/01/2021 12:00:00 AM,32.5
+gender,Female,23,Jan 20 - Feb 1,01/20/2021 12:00:00 AM,02/01/2021 12:00:00 AM,38.4
+race,Hispanic or Latino,23,Jan 20 - Feb 1,01/20/2021 12:00:00 AM,02/01/2021 12:00:00 AM,39.7
+race,"Non-Hispanic White, single race",23,Jan 20 - Feb 1,01/20/2021 12:00:00 AM,02/01/2021 12:00:00 AM,34.4
+race,"Non-Hispanic Black, single race",23,Jan 20 - Feb 1,01/20/2021 12:00:00 AM,02/01/2021 12:00:00 AM,34.4
+race,"Non-Hispanic Asian, single race",23,Jan 20 - Feb 1,01/20/2021 12:00:00 AM,02/01/2021 12:00:00 AM,36.3
+race,"Non-Hispanic, other races and multiple races",23,Jan 20 - Feb 1,01/20/2021 12:00:00 AM,02/01/2021 12:00:00 AM,41.5
+education,Less than a high school diploma,23,Jan 20 - Feb 1,01/20/2021 12:00:00 AM,02/01/2021 12:00:00 AM,36.2
+education,High school diploma or GED,23,Jan 20 - Feb 1,01/20/2021 12:00:00 AM,02/01/2021 12:00:00 AM,31.5
+education,Some college/Associates degree,23,Jan 20 - Feb 1,01/20/2021 12:00:00 AM,02/01/2021 12:00:00 AM,38.6
+education,Bachelor degree or higher,23,Jan 20 - Feb 1,01/20/2021 12:00:00 AM,02/01/2021 12:00:00 AM,36.3
+age,18 - 29 years,28,Apr 14 - Apr 26,04/14/2021 12:00:00 AM,04/26/2021 12:00:00 AM,26.2
+age,30 - 39 years,28,Apr 14 - Apr 26,04/14/2021 12:00:00 AM,04/26/2021 12:00:00 AM,27.7
+age,40 - 49 years,28,Apr 14 - Apr 26,04/14/2021 12:00:00 AM,04/26/2021 12:00:00 AM,26
+age,50 - 59 years,28,Apr 14 - Apr 26,04/14/2021 12:00:00 AM,04/26/2021 12:00:00 AM,25.2
+age,60 - 69 years,28,Apr 14 - Apr 26,04/14/2021 12:00:00 AM,04/26/2021 12:00:00 AM,21.1
+age,70 - 79 years,28,Apr 14 - Apr 26,04/14/2021 12:00:00 AM,04/26/2021 12:00:00 AM,16.5
+age,80 years and above,28,Apr 14 - Apr 26,04/14/2021 12:00:00 AM,04/26/2021 12:00:00 AM,16
+gender,Male,28,Apr 14 - Apr 26,04/14/2021 12:00:00 AM,04/26/2021 12:00:00 AM,21.6
+gender,Female,28,Apr 14 - Apr 26,04/14/2021 12:00:00 AM,04/26/2021 12:00:00 AM,26.1
+race,Hispanic or Latino,28,Apr 14 - Apr 26,04/14/2021 12:00:00 AM,04/26/2021 12:00:00 AM,30.7
+race,"Non-Hispanic White, single race",28,Apr 14 - Apr 26,04/14/2021 12:00:00 AM,04/26/2021 12:00:00 AM,21.8
+race,"Non-Hispanic Black, single race",28,Apr 14 - Apr 26,04/14/2021 12:00:00 AM,04/26/2021 12:00:00 AM,23.3
+race,"Non-Hispanic Asian, single race",28,Apr 14 - Apr 26,04/14/2021 12:00:00 AM,04/26/2021 12:00:00 AM,29.8
+race,"Non-Hispanic, other races and multiple races",28,Apr 14 - Apr 26,04/14/2021 12:00:00 AM,04/26/2021 12:00:00 AM,30.3
+education,Less than a high school diploma,28,Apr 14 - Apr 26,04/14/2021 12:00:00 AM,04/26/2021 12:00:00 AM,29.3
+education,High school diploma or GED,28,Apr 14 - Apr 26,04/14/2021 12:00:00 AM,04/26/2021 12:00:00 AM,20.3
+education,Some college/Associates degree,28,Apr 14 - Apr 26,04/14/2021 12:00:00 AM,04/26/2021 12:00:00 AM,26.6
+education,Bachelor degree or higher,28,Apr 14 - Apr 26,04/14/2021 12:00:00 AM,04/26/2021 12:00:00 AM,23.8

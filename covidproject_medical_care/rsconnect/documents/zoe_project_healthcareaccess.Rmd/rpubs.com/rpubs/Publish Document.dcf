@@ -1,0 +1,10 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/795863/6d9b3a3ec6cf406599b5c38a61c8be8b
+bundleId: https://api.rpubs.com/api/v1/document/795863/6d9b3a3ec6cf406599b5c38a61c8be8b
+url: http://rpubs.com/rockinrobinn/795863
+when: 1627954052.57683
